@@ -21,130 +21,206 @@
 
 BMP280MI::BMP280MI()
 {
+	//nothing to do here...
 }
 
 BMP280MI::~BMP280MI()
 {
+	//nothing to do here...
 }
 
-bool BMP280MI::begin()
-{
-}
-
-//starts a measurement. 
-//@return true on success, false otherwise. 
 bool BMP280MI::measure()
 {
-	
+	//return false if a measurement is already running. 
+	if (readRegisterValue(BMP280_REG_STATUS, BMP280_MASK_STATUS_MEASURING))
+		return false;
+
+	//start a forced measurement. 
+	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE, BMP280_MODE_FORCED);
+
+	return true;
 }
 
-//@return true if a measurement was completed, false otherwise. 
 bool BMP280MI::hasValue()
 {
-	
+	return !static_cast<bool>(readRegisterValue(BMP280_REG_STATUS, BMP280_MASK_STATUS_MEASURING));
 }
 
-//@return the last measured pressure, in Pa. 
 float BMP280MI::getPressure()
 {
-	
+	//TODO implement pressure calculation 
+	return NAN;
 }
 
-//@return the last measured temperature, in deg C. 
 float BMP280MI::getTemperature()
 {
-	
+	//TODO implement temperature calculation 
+	return NAN;
 }
 
-//triggers a measurement and returns the measured temperature. 
-//@return temperature in deg C or NAN if the measurement failed. 
 float BMP280MI::readTemperature()
 {
-	
+	if (!measure())
+		return NAN;
+
+	do
+	{
+		delay(100);
+	} while (!hasValue());
+
+	return getTemperature();
 }
-	
-//triggers a measurement and returns the measured pressure. 
-//@return pressure in Pa or NAN if the measurement failed. 
+
 float BMP280MI::readPressure()
 {
-	
+	if (!measure())
+		return NAN;
+
+	do
+	{
+		delay(100);
+	} while (!hasValue());
+
+	return getPressure();
 }
 
-//@return pressure oversampling setting
+uint8_t BMP280MI::readID()
+{
+	return readRegisterValue(BMP280_REG_ID, BMP280_MASK_ID);
+}
+
+void BMP280MI::resetToDefaults()
+{
+	writeRegisterValue(BMP280_REG_RESET, BMP280_MSAK_RESET, BMP280_RESET);
+}
+
 uint8_t BMP280MI::readOversamplingPressure()
 {
-	
+	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_P);
 }
 
-//@param value to set
-//@return true on success, false otherwise. 
 bool BMP280MI::writeOversamplingPressure(uint8_t value)
 {
-	
+	if (value > 0b111)
+		return false;
+
+	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_P, value);
+
+	return true;
 }
 
-//@return pressure oversampling setting
 uint8_t BMP280MI::readOversamplingTemperature()
 {
-	
+	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_T);
 }
 
-//@param value to set
-//@return true on success, false otherwise. 
 bool BMP280MI::writeOversamplingTemperature(uint8_t value)
 {
-	
+	if (value > 0b111)
+		return false;
+
+	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_T, value);
+
+	return true;
 }
 
-//@return filter setting as filter_setting_t.
 uint8_t BMP280MI::readFilterSetting()
 {
-	
+	//TODO implement
 }
 
-//@param filter setting as filter_setting_t.
-//@return true on success, false otherwise. 
 bool BMP280MI::writeFilterSetting(uint8_t setting)
 {
-	
+	//TODO implement
 }
 
-//@return sensors power mode as power_mode_t.
 uint8_t BMP280MI::readPowerMode()
 {
-	
+	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE);
 }
 
-//sets the sensors power mode. 
-//@param power mode as power_mode_t
-//@return true on success, false otherwise. 
 bool BMP280MI::writePowerMode(uint8_t mode)
 {
-	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE)
+	if (mode > 0x03)
+		return false;
+
+	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE, mode);
+
+	return true;
 }
 
-//@return standby time as standby_time_t. 
 uint8_t BMP280MI::readStandbyTime()
 {
-	readRegisterValue(BMP280_REG_CONFIG, BMP280_MASK_T_SB);
+	return readRegisterValue(BMP280_REG_CONFIG, BMP280_MASK_T_SB);
 }
 
-//sets the sensors standby time. only has an effect if measurements are done in 'normal' (automatic) mode. 
-//@param standby time as standby_time_t. 
-//@return true on success, false otherwise. 
 bool BMP280MI::writeStandbyTime(uint8_t standby_time)
 {
 	if (standby_time > 0x07)
 		return false;
-	
+
 	writeRegisterValue(BMP280_REG_CONFIG, BMP280_MASK_T_SB, standby_time);
-	
+
 	return true;
 }
 
+uint8_t BMP280MI::getMaskShift(uint8_t mask)
+{
+	uint8_t return_value = 0;
+
+	//count how many times the mask must be shifted right until the lowest bit is set
+	if (mask != 0)
+	{
+		while (!(mask & 1))
+		{
+			return_value++;
+			mask >>= 1;
+		}
+	}
+
+	return return_value;
+}
+
+uint8_t BMP280MI::getMaskedBits(uint8_t reg, uint8_t mask)
+{
+	//extract masked bits
+	return ((reg & mask) >> getMaskShift(mask));
+}
+
+uint8_t BMP280MI::setMaskedBits(uint8_t reg, uint8_t mask, uint8_t value)
+{
+	//clear mask bits in register
+	reg &= (~mask);
+
+	//set masked bits in register according to value
+	return ((value << getMaskShift(mask)) & mask) | reg;
+}
+
+uint8_t BMP280MI::readRegisterValue(uint8_t reg, uint8_t mask)
+{
+	return getMaskedBits(readRegister(reg), mask);
+}
+
+void BMP280MI::writeRegisterValue(uint8_t reg, uint8_t mask, uint8_t value)
+{
+	uint8_t reg_val = readRegister(reg);
+	writeRegister(reg, setMaskedBits(reg_val, mask, value));
+}
+
+bool BMP280MI::readRawValues()
+{
+	return false;
+}
+
+bool BMP280MI::readCompensationParameters()
+{
+	return false;
+}
+
+
 //-----------------------------------------------------------------------
 //BMP280I2C
-BMP280I2C::BMP280I2C(uint8_t i2c_address) : 
+BMP280I2C::BMP280I2C(uint8_t i2c_address) :
 	i2c_address_(i2c_address)
 {
 	//nothing to do here...
@@ -159,25 +235,30 @@ bool BMP280I2C::begin()
 {
 	if (readID() != BMP280_ID)
 		return false;
-	
-	//...
-	
+
+	resetToDefaults();
+
 	return true;
 }
 
 uint8_t BMP280I2C::readRegister(uint8_t reg)
 {
-	
+	//TODO implement
+}
+
+uint32_t BMP280I2C::readRegisters(uint8_t reg, uint8_t length)
+{
+	return uint32_t();
 }
 
 void BMP280I2C::writeRegister(uint8_t reg, uint8_t value)
 {
-	
+	//TODO implement
 }
 
 //-----------------------------------------------------------------------
 //BMP280SPI
-BMP280SPI::BMP280SPI(uint8_t chip_select) : 
+BMP280SPI::BMP280SPI(uint8_t chip_select) :
 	chip_select_(chip_select)
 {
 	//nothing to do here...
@@ -190,15 +271,20 @@ BMP280SPI::~BMP280SPI()
 
 bool BMP280SPI::begin()
 {
-	
+	//TODO implement
 }
 
 uint8_t BMP280SPI::readRegister(uint8_t reg)
 {
-	
+	//TODO implement
+}
+
+uint32_t BMP280SPI::readRegisters(uint8_t reg, uint8_t length)
+{
+	return uint32_t();
 }
 
 void BMP280SPI::writeRegister(uint8_t reg, uint8_t value)
 {
-	
+	//TODO implement
 }
