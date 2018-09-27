@@ -88,18 +88,28 @@ public:
 
 	//@return true if a measurement was completed, false otherwise. 
 	bool hasValue();
+	
+	//@return the last measured humidity value, in %RH. 
+	float getHumidity();
 
 	//@return the last measured pressure, in Pa. 
 	float getPressure();
 
 	//@return the last measured temperature, in deg C. 
 	float getTemperature();
+	
+	//triggers a measurement and returns the measured humidity. do not use in 
+	//event loops, as it blocks. 
+	//@return humidtity in %RH or NAN if the measurement failed. 
+	float readHumidity();
 
-	//triggers a measurement and returns the measured temperature. 
+	//triggers a measurement and returns the measured temperature. do not use in 
+	//event loops, as it blocks. 
 	//@return temperature in deg C or NAN if the measurement failed. 
 	float readTemperature();
 
-	//triggers a measurement and returns the measured pressure. 
+	//triggers a measurement and returns the measured pressure. do not use in 
+	//event loops, as it blocks. 
 	//@return pressure in Pa or NAN if the measurement failed. 
 	float readPressure();
 
@@ -242,7 +252,7 @@ private:
 	@param reg register to read.
 	@param length number of bytes to read
 	@return register content*/
-	virtual uint32_t readRegisters(uint8_t reg, uint8_t length) = 0;
+	virtual uint32_t readRegisterBurst(uint8_t reg, uint8_t length) = 0;
 
 	/*
 	writes a register to the sensor. must be overwritten by derived classes.
@@ -290,7 +300,7 @@ public:
 private:
 	uint8_t readRegister(uint8_t reg);
 
-	uint32_t readRegisters(uint8_t reg, uint8_t length);
+	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
 
 	void writeRegister(uint8_t reg, uint8_t value);
 
@@ -308,11 +318,13 @@ public:
 private:
 	uint8_t readRegister(uint8_t reg);
 
-	uint32_t readRegisters(uint8_t reg, uint8_t length);
+	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
 
 	void writeRegister(uint8_t reg, uint8_t value);
 
 	uint8_t chip_select_;
+
+		static SPISettings spi_settings_;     //spi settings object. is the same for all AS3935 sensors
 };
 
 #endif /* BMP280MI_H_ */ 

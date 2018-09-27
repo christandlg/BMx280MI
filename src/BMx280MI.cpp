@@ -19,6 +19,8 @@
 
 #include "BMP280MI.h"
 
+SPISettings BMP280MISPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
+
 BMP280MI::BMP280MI()
 {
 	//nothing to do here...
@@ -243,17 +245,32 @@ bool BMP280I2C::begin()
 
 uint8_t BMP280I2C::readRegister(uint8_t reg)
 {
-	//TODO implement
+	#if defined(ARDUINO_SAM_DUE)
+		//workaround for Arduino Due. The Due seems not to send a repeated start with the code above, so this 
+		//undocumented feature of Wire::requestFrom() is used. can be used on other Arduinos too (tested on Mega2560)
+		//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
+		Wire.requestFrom(address_, 1, reg, 1, true);
+	#else
+		Wire.beginTransmission(i2c_address_);
+		Wire.write(reg);
+		Wire.endTransmission(false);
+		Wire.requestFrom(address_, static_cast<uint8_t>(1));
+	#endif
+	
+	return Wire.read();
 }
 
-uint32_t BMP280I2C::readRegisters(uint8_t reg, uint8_t length)
+uint32_t BMP280I2C::readRegisterBurst(uint8_t reg, uint8_t length)
 {
 	return uint32_t();
 }
 
 void BMP280I2C::writeRegister(uint8_t reg, uint8_t value)
 {
-	//TODO implement
+	Wire.beginTransmission(i2c_address_);
+	Wire.write(reg);
+	Wire.write(value);
+	Wire.endTransmission();
 }
 
 //-----------------------------------------------------------------------
@@ -276,15 +293,34 @@ bool BMP280SPI::begin()
 
 uint8_t BMP280SPI::readRegister(uint8_t reg)
 {
-	//TODO implement
+	uint8_t return_value = 0;
+	
+	SPI.beginTransaction(spi_settings_);
+
+	digitalWrite(cs_, LOW);				//select sensor
+
+	SPI.transfer((reg & 0x3F) | 0x40);	//select register and set pin 7 (indicates read)
+	
+	return_value = SPI.transfer(0);
+
+	digitalWrite(cs_, HIGH);			//deselect sensor
+	
+	return return_value;
 }
 
-uint32_t BMP280SPI::readRegisters(uint8_t reg, uint8_t length)
+uint32_t BMP280SPI::readRegisterBurst(uint8_t reg, uint8_t length)
 {
 	return uint32_t();
 }
 
 void BMP280SPI::writeRegister(uint8_t reg, uint8_t value)
 {
-	//TODO implement
+	SPI.beginTransaction(spi_settings_);
+
+	digitalWrite(cs_, LOW);				//select sensor
+
+	SPI.transfer((reg & 0x3F));			//select regsiter 
+	SPI.transfer(value);
+
+	digitalWrite(cs_, HIGH);			//deselect sensor
 }

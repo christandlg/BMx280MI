@@ -1,6 +1,7 @@
-Yet Another Arduino BMP280 Digital Pressure Sensor Library
-home: https://bitbucket.org/christandlg/bmp280mi
-sensor: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 
+Yet Another Arduino BME280 and BMP280 Digital Pressure Sensor Library
+home: https://bitbucket.org/christandlg/bmx280mi
+sensor: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 https://www.bosch-sensortec.com/bst/products/all_products/bmx280 
 
 Features:
-- Supports I2C and SPI
+- Supports I2C (via the Wire library) and SPI (via the SPI library) interfaces
+- Supports other I2C and SPI libraries via inheritance

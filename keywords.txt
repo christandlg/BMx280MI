@@ -6,9 +6,9 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-BMP280MI	KEYWORD1
-BMP280I2C	KEYWORD1
-BMP280SPI	KEYWORD1
+BMx280MI	KEYWORD1
+BMx280I2C	KEYWORD1
+BMx280SPI	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
