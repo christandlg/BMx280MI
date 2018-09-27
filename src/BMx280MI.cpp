@@ -17,50 +17,92 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-#include "BMP280MI.h"
+#include "BMx280MI.h"
 
-SPISettings BMP280MISPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
+SPISettings BMx280SPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
 
-BMP280MI::BMP280MI()
+BMx280MI::BMx280MI() : 
+	id_(BMP280_ID),			//assume BMP280 by default
+	temp_fine_(0L),
+	raw_humidity_(0L),
+	raw_pressure_(0L),
+	raw_temp_(0L)
+{
+	comp_params_ = {
+		0, //dig_T1
+		0, //dig_T2
+		0, //dig_T3
+
+		0, //dig_P1
+		0, //dig_P2
+		0, //dig_P3
+		0, //dig_P4
+		0, //dig_P5
+		0, //dig_P6
+		0, //dig_P7
+		0, //dig_P8
+		0, //dig_P9
+
+		0, //dig_H1
+		0, //dig_H2
+		0, //dig_H3
+		0, //dig_H4
+		0, //dig_H5
+		0  //dig_H6
+	};
+}
+
+BMx280MI::~BMx280MI()
 {
 	//nothing to do here...
 }
 
-BMP280MI::~BMP280MI()
-{
-	//nothing to do here...
-}
-
-bool BMP280MI::measure()
+bool BMx280MI::measure()
 {
 	//return false if a measurement is already running. 
-	if (readRegisterValue(BMP280_REG_STATUS, BMP280_MASK_STATUS_MEASURING))
+	if (readRegisterValue(BMx280_REG_STATUS, BMx280_MASK_STATUS_MEASURING))
 		return false;
 
 	//start a forced measurement. 
-	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE, BMP280_MODE_FORCED);
+	writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE, BMx280_MODE_FORCED);
 
 	return true;
 }
 
-bool BMP280MI::hasValue()
+bool BMx280MI::hasValue()
 {
-	return !static_cast<bool>(readRegisterValue(BMP280_REG_STATUS, BMP280_MASK_STATUS_MEASURING));
+	return !static_cast<bool>(readRegisterValue(BMx280_REG_STATUS, BMx280_MASK_STATUS_MEASURING));
 }
 
-float BMP280MI::getPressure()
+float BMx280MI::getHumidity()
+{
+	if (!isBME280())
+		return NAN;
+
+	return 0.0f;
+}
+
+float BMx280MI::getPressure()
 {
 	//TODO implement pressure calculation 
 	return NAN;
 }
 
-float BMP280MI::getTemperature()
+float BMx280MI::getTemperature()
 {
 	//TODO implement temperature calculation 
 	return NAN;
 }
 
-float BMP280MI::readTemperature()
+float BMx280MI::readHumidity()
+{
+	if (!isBME280())
+		return NAN;
+
+	return 0.0f;
+}
+
+float BMx280MI::readTemperature()
 {
 	if (!measure())
 		return NAN;
@@ -73,7 +115,7 @@ float BMP280MI::readTemperature()
 	return getTemperature();
 }
 
-float BMP280MI::readPressure()
+float BMx280MI::readPressure()
 {
 	if (!measure())
 		return NAN;
@@ -86,87 +128,145 @@ float BMP280MI::readPressure()
 	return getPressure();
 }
 
-uint8_t BMP280MI::readID()
+uint8_t BMx280MI::readID()
 {
-	return readRegisterValue(BMP280_REG_ID, BMP280_MASK_ID);
+	id_ = readRegisterValue(BMx280_REG_ID, BMx280_MASK_ID);
+
+	return id_;
 }
 
-void BMP280MI::resetToDefaults()
+BMx280MI::BMP280CompParams BMx280MI::readCompensationParameters()
 {
-	writeRegisterValue(BMP280_REG_RESET, BMP280_MSAK_RESET, BMP280_RESET);
+	//read compensation parameters
+	comp_params_.dig_T1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_T1, BMx280_MASK_DIG_T1, 2));
+	comp_params_.dig_T2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T2, BMx280_MASK_DIG_T2, 2));
+	comp_params_.dig_T3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T3, BMx280_MASK_DIG_T3, 2));
+
+	comp_params_.dig_P1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_P1, BMx280_MASK_DIG_P1, 2));
+	comp_params_.dig_P2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P2, BMx280_MASK_DIG_P2, 2));
+	comp_params_.dig_P3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P3, BMx280_MASK_DIG_P3, 2));
+	comp_params_.dig_P4_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P4, BMx280_MASK_DIG_P4, 2));
+	comp_params_.dig_P5_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P5, BMx280_MASK_DIG_P5, 2));
+	comp_params_.dig_P6_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P6, BMx280_MASK_DIG_P6, 2));
+	comp_params_.dig_P7_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P7, BMx280_MASK_DIG_P7, 2));
+	comp_params_.dig_P8_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P8, BMx280_MASK_DIG_P8, 2));
+	comp_params_.dig_P9_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P9, BMx280_MASK_DIG_P9, 2));
+
+	//reda humidity compensation parameters if the sensor is of the BME280 family
+	if (isBME280())
+	{
+		comp_params_.dig_H1_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 1));
+		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 2));
+		comp_params_.dig_H1_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H3, 1));
+		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H4, 2));
+		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H5, 2));
+		comp_params_.dig_H1_ = static_cast<int8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H6, 1));
+	}
+
+	return comp_params_;
 }
 
-uint8_t BMP280MI::readOversamplingPressure()
+bool BMx280MI::isBME280()
 {
-	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_P);
+	return (BMx280MI::readID() == BMx280MI::BME280_ID);
 }
 
-bool BMP280MI::writeOversamplingPressure(uint8_t value)
+void BMx280MI::resetToDefaults()
+{
+	writeRegisterValue(BMx280_REG_RESET, BMP280_MASK_RESET, BMx280_CMD_RESET);
+}
+
+uint8_t BMx280MI::readOversamplingHumidity()
+{
+	return readRegisterValue(BME280_REG_CTRL_HUM, BMx280_MASK_OSRS_H);
+}
+
+bool BMx280MI::writeOversamplingHumidity(uint8_t value)
 {
 	if (value > 0b111)
 		return false;
 
-	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_P, value);
+	writeRegisterValue(BME280_REG_CTRL_HUM, BMx280_MASK_OSRS_H, value);
 
 	return true;
 }
 
-uint8_t BMP280MI::readOversamplingTemperature()
+uint8_t BMx280MI::readOversamplingPressure()
 {
-	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_T);
+	return readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_OSRS_P);
 }
 
-bool BMP280MI::writeOversamplingTemperature(uint8_t value)
+bool BMx280MI::writeOversamplingPressure(uint8_t value)
 {
 	if (value > 0b111)
 		return false;
 
-	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_OSRS_T, value);
+	writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_OSRS_P, value);
 
 	return true;
 }
 
-uint8_t BMP280MI::readFilterSetting()
+uint8_t BMx280MI::readOversamplingTemperature()
 {
-	//TODO implement
+	return readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_OSRS_T);
 }
 
-bool BMP280MI::writeFilterSetting(uint8_t setting)
+bool BMx280MI::writeOversamplingTemperature(uint8_t value)
 {
-	//TODO implement
+	if (value > 0b111)
+		return false;
+
+	writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_OSRS_T, value);
+
+	return true;
 }
 
-uint8_t BMP280MI::readPowerMode()
+uint8_t BMx280MI::readFilterSetting()
 {
-	return readRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE);
+	return readRegisterValue(BMx280_REG_CONFIG, BMx280_MASK_FILTER);
 }
 
-bool BMP280MI::writePowerMode(uint8_t mode)
+bool BMx280MI::writeFilterSetting(uint8_t value)
+{
+	if (value > 0b111)
+		return false;
+
+	writeRegisterValue(BMx280_REG_CONFIG, BMx280_MASK_FILTER, value);
+
+	return true;
+}
+
+uint8_t BMx280MI::readPowerMode()
+{
+	return readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE);
+}
+
+bool BMx280MI::writePowerMode(uint8_t mode)
 {
 	if (mode > 0x03)
 		return false;
 
-	writeRegisterValue(BMP280_REG_CTRL_MEAS, BMP280_MASK_MODE, mode);
+	writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE, mode);
 
 	return true;
 }
 
-uint8_t BMP280MI::readStandbyTime()
+uint8_t BMx280MI::readStandbyTime()
 {
-	return readRegisterValue(BMP280_REG_CONFIG, BMP280_MASK_T_SB);
+	return readRegisterValue(BMx280_REG_CONFIG, BMx280_MASK_T_SB);
 }
 
-bool BMP280MI::writeStandbyTime(uint8_t standby_time)
+bool BMx280MI::writeStandbyTime(uint8_t standby_time)
 {
 	if (standby_time > 0x07)
 		return false;
 
-	writeRegisterValue(BMP280_REG_CONFIG, BMP280_MASK_T_SB, standby_time);
+	writeRegisterValue(BMx280_REG_CONFIG, BMx280_MASK_T_SB, standby_time);
 
 	return true;
 }
 
-uint8_t BMP280MI::getMaskShift(uint8_t mask)
+uint8_t BMx280MI::getMaskShift(uint8_t mask)
 {
 	uint8_t return_value = 0;
 
@@ -183,13 +283,13 @@ uint8_t BMP280MI::getMaskShift(uint8_t mask)
 	return return_value;
 }
 
-uint8_t BMP280MI::getMaskedBits(uint8_t reg, uint8_t mask)
+uint8_t BMx280MI::getMaskedBits(uint8_t reg, uint8_t mask)
 {
 	//extract masked bits
 	return ((reg & mask) >> getMaskShift(mask));
 }
 
-uint8_t BMP280MI::setMaskedBits(uint8_t reg, uint8_t mask, uint8_t value)
+uint8_t BMx280MI::setMaskedBits(uint8_t reg, uint8_t mask, uint8_t value)
 {
 	//clear mask bits in register
 	reg &= (~mask);
@@ -198,42 +298,64 @@ uint8_t BMP280MI::setMaskedBits(uint8_t reg, uint8_t mask, uint8_t value)
 	return ((value << getMaskShift(mask)) & mask) | reg;
 }
 
-uint8_t BMP280MI::readRegisterValue(uint8_t reg, uint8_t mask)
+uint8_t BMx280MI::readRegisterValue(uint8_t reg, uint8_t mask)
 {
 	return getMaskedBits(readRegister(reg), mask);
 }
 
-void BMP280MI::writeRegisterValue(uint8_t reg, uint8_t mask, uint8_t value)
+void BMx280MI::writeRegisterValue(uint8_t reg, uint8_t mask, uint8_t value)
 {
 	uint8_t reg_val = readRegister(reg);
 	writeRegister(reg, setMaskedBits(reg_val, mask, value));
 }
 
-bool BMP280MI::readRawValues()
+uint32_t BMx280MI::readRegisterValueBurst(uint8_t reg, uint32_t mask, uint8_t length)
+{
+	if (length > 4)
+		return 0L;
+
+	uint32_t data = 0L;
+
+	//TODO implement
+
+	return data;
+}
+
+uint32_t BMx280MI::readRegisterBurst(uint8_t reg, uint8_t length)
+{
+	if (length > 4)
+		return 0L;
+
+	uint32_t data = 0L;
+
+	for (uint8_t i = 0; i < length; i++)
+	{
+		data <<= 8;
+		data |= static_cast<uint32_t>(readRegister(reg));
+	}
+
+	return data;
+}
+
+bool BMx280MI::readRawValues()
 {
 	return false;
 }
-
-bool BMP280MI::readCompensationParameters()
-{
-	return false;
-}
-
 
 //-----------------------------------------------------------------------
-//BMP280I2C
-BMP280I2C::BMP280I2C(uint8_t i2c_address) :
-	i2c_address_(i2c_address)
+//BMx280I2C
+BMx280I2C::BMx280I2C(uint8_t i2c_address) :
+	address_(i2c_address)
 {
 	//nothing to do here...
 }
 
-BMP280I2C::~BMP280I2C()
+BMx280I2C::~BMx280I2C()
 {
 	//nothing to do here...
 }
 
-bool BMP280I2C::begin()
+bool BMx280I2C::begin()
 {
 	if (readID() != BMP280_ID)
 		return false;
@@ -243,7 +365,7 @@ bool BMP280I2C::begin()
 	return true;
 }
 
-uint8_t BMP280I2C::readRegister(uint8_t reg)
+uint8_t BMx280I2C::readRegister(uint8_t reg)
 {
 	#if defined(ARDUINO_SAM_DUE)
 		//workaround for Arduino Due. The Due seems not to send a repeated start with the code above, so this 
@@ -251,7 +373,7 @@ uint8_t BMP280I2C::readRegister(uint8_t reg)
 		//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
 		Wire.requestFrom(address_, 1, reg, 1, true);
 	#else
-		Wire.beginTransmission(i2c_address_);
+		Wire.beginTransmission(address_);
 		Wire.write(reg);
 		Wire.endTransmission(false);
 		Wire.requestFrom(address_, static_cast<uint8_t>(1));
@@ -260,38 +382,40 @@ uint8_t BMP280I2C::readRegister(uint8_t reg)
 	return Wire.read();
 }
 
-uint32_t BMP280I2C::readRegisterBurst(uint8_t reg, uint8_t length)
+uint32_t BMx280I2C::readRegisterBurst(uint8_t reg, uint8_t length)
 {
-	return uint32_t();
+	uint32_t data = 0L;
+
+	return data;
 }
 
-void BMP280I2C::writeRegister(uint8_t reg, uint8_t value)
+void BMx280I2C::writeRegister(uint8_t reg, uint8_t value)
 {
-	Wire.beginTransmission(i2c_address_);
+	Wire.beginTransmission(address_);
 	Wire.write(reg);
 	Wire.write(value);
 	Wire.endTransmission();
 }
 
 //-----------------------------------------------------------------------
-//BMP280SPI
-BMP280SPI::BMP280SPI(uint8_t chip_select) :
-	chip_select_(chip_select)
+//BMx280SPI
+BMx280SPI::BMx280SPI(uint8_t chip_select) :
+	cs_(chip_select)
 {
 	//nothing to do here...
 }
 
-BMP280SPI::~BMP280SPI()
+BMx280SPI::~BMx280SPI()
 {
 	//nothing to do here...
 }
 
-bool BMP280SPI::begin()
+bool BMx280SPI::begin()
 {
 	//TODO implement
 }
 
-uint8_t BMP280SPI::readRegister(uint8_t reg)
+uint8_t BMx280SPI::readRegister(uint8_t reg)
 {
 	uint8_t return_value = 0;
 	
@@ -308,12 +432,12 @@ uint8_t BMP280SPI::readRegister(uint8_t reg)
 	return return_value;
 }
 
-uint32_t BMP280SPI::readRegisterBurst(uint8_t reg, uint8_t length)
+uint32_t BMx280SPI::readRegisterBurst(uint8_t reg, uint8_t length)
 {
 	return uint32_t();
 }
 
-void BMP280SPI::writeRegister(uint8_t reg, uint8_t value)
+void BMx280SPI::writeRegister(uint8_t reg, uint8_t value)
 {
 	SPI.beginTransaction(spi_settings_);
 
