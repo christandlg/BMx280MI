@@ -1,37 +1,37 @@
-// BMP280_LightningDetector_SPI.ino
+// BMx280_LightningDetector_SPI.ino
 //
-// shows how to use the BMP280 library interfaces other than the native I2C or SPI interfaces. 
+// shows how to use the BMx280 library interfaces other than the native I2C or SPI interfaces. 
 // here, the second I2C port of an Arduino Due is used (Wire1)
 //
 // Copyright (c) 2018 Gregor Christandl
 //
-// connect the BMP280 to the Arduino Due like this:
+// connect the BMx280 to the Arduino Due like this:
 //
-// Arduino - BMP280
+// Arduino - BMx280
 // 3.3V ---- VCC
 // GND ----- GND
 // D2 ------ IRQ		must be a pin supporting external interrupts, e.g. D2 or D3 on an Arduino Uno.
 // SDA1 ---- MOSI
 // SCL1 ---- SCL
-// 5V ------ SI		(activates I2C for the BMP280)
-// 5V ------ A0		(sets the BMP280' I2C address to 0x01)
-// GND ----- A1		(sets the BMP280' I2C address to 0x01)
+// 5V ------ SI		(activates I2C for the BMx280)
+// 5V ------ A0		(sets the BMx280' I2C address to 0x01)
+// GND ----- A1		(sets the BMx280' I2C address to 0x01)
 // other pins can be left unconnected.
 
 #include <Arduino.h>
 
 #include <Wire.h>
 
-#include <BMP280MI.h>
+#include <BMx280MI.h>
 
-//class derived from BMP280MI that implements communication via an interface other than native I2C or SPI. 
-class BMP280Wire1 : public BMP280MI
+//class derived from BMx280MI that implements communication via an interface other than native I2C or SPI. 
+class BMx280Wire1 : public BMx280MI
 {
 	public:	
 		//constructor of the derived class. 
 		//@param address i2c address of the sensor.
-		BMP280Wire1(uint8_t i2c_address) 
-		i2c_address_(i2c_address)	//initialize the BMP280Wire1 classes private member i2c_address_ to the i2c address provided
+		BMx280Wire1(uint8_t i2c_address) 
+		i2c_address_(i2c_address)	//initialize the BMx280Wire1 classes private member i2c_address_ to the i2c address provided
 		{
 			//nothing else to do here...
 		}
@@ -40,7 +40,7 @@ class BMP280Wire1 : public BMP280MI
 		//@return true on success, false otherwise. 
 		bool begin()
 		{
-			if (readID() != BMP280_ID)
+			if (readID() != BMx280_ID)
 				return false;
 
 			resetToDefaults();
@@ -83,8 +83,8 @@ class BMP280Wire1 : public BMP280MI
 		uint8_t i2c_address_;		//i2c address of sensor
 };
 
-//create an BMP280 object using the I2C interface, I2C address 0x01 and IRQ pin number 2
-BMP280Wire1 bmp280(I2C_ADDRESS);
+//create an BMx280 object using the I2C interface, I2C address 0x01 and IRQ pin number 2
+BMx280Wire1 bmx280(I2C_ADDRESS);
 
 void setup() {
 	// put your setup code here, to run once:
@@ -95,11 +95,11 @@ void setup() {
 
 	Wire1.begin();
 
-	//begin() checks the Interface and I2C Address passed to the constructor and resets the BMP280 to 
+	//begin() checks the Interface and I2C Address passed to the constructor and resets the BMx280 to 
 	//default values.
-	if (!bmp280.begin())
+	if (!bmx280.begin())
 	{
-		Serial.println("begin() failed. check your BMP280 Interface and I2C Address.");
+		Serial.println("begin() failed. check your BMx280 Interface and I2C Address.");
 		while (1);
 	}
 
@@ -112,7 +112,7 @@ void loop() {
 	delay(1000);
 
 	//start a measurement
-	if (!bmp280.measure())
+	if (!bmx280.measure())
 	{
 		Serial.println("could not start measurement, is a measurement already running?");
 		return;
@@ -122,8 +122,8 @@ void loop() {
 	do
 	{
 		delay(100);
-	} while (!bmp280.hasValue());
+	} while (!bmx280.hasValue());
 
-	Serial.print("Pressure: "); Serial.println(bmp280.getPressure());
-	Serial.print("Temperature: "); Serial.println(bmp280.getTemperature());
+	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
+	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 }

@@ -21,12 +21,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include <BMP280MI.h>
+#include <BMx280MI.h>
 
 #define I2C_ADDRESS 0x76
 
 //create an AS3935 object using the I2C interface, I2C address 0x01 and IRQ pin number 2
-BMP280I2C bmp280(I2C_ADDRESS);
+BMx280I2C bmx280(I2C_ADDRESS);
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,9 +39,9 @@ void setup() {
 
 	//begin() checks the Interface and I2C Address passed to the constructor and resets the AS3935 to 
 	//default values.
-	if (!bmp280.begin())
+	if (!bmx280.begin())
 	{
-		Serial.println("begin() failed. check your BMP280 Interface and I2C Address.");
+		Serial.println("begin() failed. check your BMx280 Interface and I2C Address.");
 		while (1);
 	}
 
@@ -54,7 +54,7 @@ void loop() {
 	delay(1000);
 
 	//start a measurement
-	if (!bmp280.measure())
+	if (!bmx280.measure())
 	{
 		Serial.println("could not start measurement, is a measurement already running?");
 		return;
@@ -64,8 +64,8 @@ void loop() {
 	do
 	{
 		delay(100);
-	} while (!bmp280.hasValue());
+	} while (!bmx280.hasValue());
 
-	Serial.print("Pressure: "); Serial.println(bmp280.getPressure());
-	Serial.print("Temperature: "); Serial.println(bmp280.getTemperature());
+	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
+	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 }
