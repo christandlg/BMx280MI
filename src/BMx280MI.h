@@ -105,13 +105,19 @@ public:
 	BMx280MI();
 	virtual ~BMx280MI();
 
-	virtual bool begin() = 0;
+	//initializes the sensor. 
+	//@return true on success, false otherwise. 
+	bool begin();
 
-	//starts a measurement. 
+	//starts a measurement. return true if automatic measurements are enabled (normal mode). returns false if a 
+	//measurement is currently running. 
 	//@return true on success, false otherwise. 
 	bool measure();
 
 	//@return true if a measurement was completed, false otherwise. 
+	//checks if a measurement is currently running. if no measurement is running, reads measurement data from the sensor. 
+	//if automatic measurements are enabled calling this function may cause the values returned by getHumidity(), 
+	//getPressure() and getTemperature() to change. 
 	bool hasValue();
 	
 	//@return the last measured humidity value, in %RH. 
@@ -125,7 +131,7 @@ public:
 	
 	//triggers a measurement and returns the measured humidity. do not use in 
 	//event loops, as it blocks. 
-	//@return humidtity in %RH or NAN if the measurement failed. 
+	//@return humidtity in %RH or NAN if the measurement failed (or the sensor is not a BME280). 
 	float readHumidity();
 
 	//triggers a measurement and returns the measured temperature. do not use in 
@@ -142,6 +148,8 @@ public:
 	//can be used as a communication check. 
 	uint8_t readID();
 
+	//reads the compensation parameters from the sensor and updates the values stored in comp_params_. 
+	//@return sensors compensation parameters as BMP280CompParams struct. 
 	BMP280CompParams readCompensationParameters();
 
 	//@return true if the sensor is a BME280, false otherwise. 
@@ -287,16 +295,37 @@ private:
 
 	static const uint8_t BMx280_CMD_RESET = 0xB6;
 
+	virtual bool beginInterface() = 0;
+
 	/*
 	@param mask
 	@return number of bits to shift value so it fits into mask. */
-	uint8_t getMaskShift(uint8_t mask);
+	template <class T> uint8_t getMaskShift(T mask)
+	{
+		uint8_t return_value = 0;
+
+		//count how many times the mask must be shifted right until the lowest bit is set
+		if (mask != 0)
+		{
+			while (!(mask & 1))
+			{
+				return_value++;
+				mask >>= 1;
+			}
+		}
+
+		return return_value;
+	};
 
 	/*
 	@param register value of register.
 	@param mask mask of value in register
 	@return value of masked bits. */
-	uint8_t getMaskedBits(uint8_t reg, uint8_t mask);
+	template <class T> uint8_t getMaskedBits(T reg, T mask)
+	{
+		//extract masked bits
+		return ((reg & mask) >> getMaskShift(mask));
+	};
 
 	/*
 	@param register value of register
@@ -349,8 +378,6 @@ private:
 	@param value value writeRegister write to register. */
 	virtual void writeRegister(uint8_t reg, uint8_t value) = 0;
 
-	bool readRawValues();
-
 	uint8_t id_;				//the sensors ID. necessary to differentiate between BMP280 and BME280. 
 
 	uint32_t temp_fine_;
@@ -370,9 +397,9 @@ public:
 	BMx280I2C(uint8_t i2c_address);
 	virtual ~BMx280I2C();
 
-	virtual bool begin();
-
 private:
+	bool beginInterface();
+
 	uint8_t readRegister(uint8_t reg);
 
 	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
@@ -388,9 +415,9 @@ public:
 	BMx280SPI(uint8_t chip_select);
 	virtual ~BMx280SPI();
 
-	virtual bool begin();
-
 private:
+	bool beginInterface();
+
 	uint8_t readRegister(uint8_t reg);
 
 	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
