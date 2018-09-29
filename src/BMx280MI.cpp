@@ -123,21 +123,55 @@ float BMx280MI::getHumidity()
 	if (raw_humidity_ == 0x8000)
 		return NAN;
 
-	//TODO implement humidity calculation
+	int32_t v_x1_u32r;
+	v_x1_u32r = temp_fine_ - 76800L;
+	v_x1_u32r = ((((raw_humidity_ << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) * (((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) * static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
+	v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) * ((int32_t)comp_params_.dig_H1_)) >> 4);
+	v_x1_u32r = v_x1_u32r < 0 ? 0 : v_x1_u32r;
+	v_x1_u32r = v_x1_u32r > 419430400 ? 419430400 : v_x1_u32r;
 
-	return NAN;
+	return static_cast<float>(v_x1_u32r >> 12) / 1024.0f;
 }
 
 float BMx280MI::getPressure()
 {
-	//TODO implement pressure calculation 
-	return NAN;
+	int32_t var1, var2;
+	uint32_t p;
+
+	var1 = (static_cast<int32_t>(temp_fine_) >> 1) - 64000L;
+	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11) * (static_cast<int32_t>(comp_params_.dig_P6_));
+	var2 = var2 + ((var1*(static_cast<int32_t>(comp_params_.dig_P5_))) << 1);
+	var2 = (var2 >> 2) + ((static_cast<int32_t>(comp_params_.dig_P4_)) << 16);
+	var1 = (((comp_params_.dig_P3_ * (((var1 >> 2) * (var1 >> 2)) >> 13)) >> 3) + (((static_cast<int32_t>(comp_params_.dig_P2_)) * var1) >> 1)) >> 18;
+	var1 = ((32768 + var1) * static_cast<int32_t>(comp_params_.dig_P1_)) >> 15;
+
+	if (var1 == 0) 
+		return NAN; // avoid exception caused by division by zero
+
+	p = ((static_cast<uint32_t>(1048576L - raw_pressure_)) - (var2 >> 12)) * 3125;
+
+	if (p < 0x80000000)
+		p = (p << 1) / (static_cast<uint32_t>(var1));
+	else 
+		p = (p / static_cast<uint32_t>(var1)) * 2;
+
+	var1 = (static_cast<int32_t>(comp_params_.dig_P9_) * static_cast<int32_t>(((p >> 3) * (p >> 3)) >> 13)) >> 12;
+	var2 = (static_cast<int32_t>(p >> 2) * static_cast<int32_t>(comp_params_.dig_P8_)) >> 13;
+	p = static_cast<uint32_t>(static_cast<int32_t>(p) + ((var1 + var2 + comp_params_.dig_P7_) >> 4));
+
+
+	return static_cast<float>(p);
 }
 
 float BMx280MI::getTemperature()
 {
-	//TODO implement temperature calculation 
-	return NAN;
+	//code adapted from BME280 data sheet section 8.2
+	int32_t var1 = ((raw_temp_ >> 3) - (static_cast<int32_t>(comp_params_.dig_T1_) << 1) * static_cast<int32_t>(comp_params_.dig_T2_)) >> 11;
+	int32_t var2 = ((raw_temp_ >> 4) - static_cast<int32_t>(comp_params_.dig_T1_) * ((raw_temp_ >> 4) - (static_cast<int32_t>(comp_params_.dig_T1_)) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_)) >> 14;
+	temp_fine_ = var1 + var2; 
+	int32_t T = (temp_fine_ * 5 + 128) >> 8;
+	
+	return static_cast<float>(T) / 100.0f;
 }
 
 float BMx280MI::readHumidity()
@@ -237,7 +271,7 @@ uint8_t BMx280MI::readOversamplingHumidity()
 
 bool BMx280MI::writeOversamplingHumidity(uint8_t value)
 {
-	if (!isBME280)
+	if (!isBME280())
 		return false;
 
 	if (value > 0b111)

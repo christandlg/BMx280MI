@@ -382,11 +382,11 @@ private:
 
 	uint32_t temp_fine_;
 
-	uint32_t raw_humidity_;
+	int32_t raw_humidity_;
 
-	uint32_t raw_pressure_;
+	int32_t raw_pressure_;
 
-	uint32_t raw_temp_;
+	int32_t raw_temp_;
 
 	BMP280CompParams comp_params_;
 };
