@@ -102,6 +102,9 @@ public:
 		int8_t dig_H6_;
 	};
 
+	static const uint8_t BMP280_ID = 0x58;
+	static const uint8_t BME280_ID = 0x60;
+
 	BMx280MI();
 	virtual ~BMx280MI();
 
@@ -120,13 +123,13 @@ public:
 	//getPressure() and getTemperature() to change. 
 	bool hasValue();
 	
-	//@return the last measured humidity value, in %RH. 
+	//@return the last measured humidity value, in %RH. uses the calculation code taken from the datasheet. 
 	float getHumidity();
 
-	//@return the last measured pressure, in Pa. 
+	//@return the last measured pressure, in Pa. uses the 32bit calculation code taken from the datasheet. 
 	float getPressure();
 
-	//@return the last measured temperature, in deg C. 
+	//@return the last measured temperature, in deg C. uses the 32bit calculation code taken from the datasheet. 
 	float getTemperature();
 	
 	//triggers a measurement and returns the measured humidity. do not use in 
@@ -203,10 +206,6 @@ public:
 	//@return true on success, false otherwise. 
 	bool writeStandbyTime(uint8_t standby_time);
 
-protected:
-	static const uint8_t BMP280_ID = 0x58;
-	static const uint8_t BME280_ID = 0x60;
-
 private:
 	enum bmx280_register_t : uint8_t
 	{
@@ -265,7 +264,8 @@ private:
 		BMx280_MASK_T_SB = 0b11100000,
 	};
 
-	enum mask_dig_t : uint32_t
+	//32 bit masks for burst reading. 
+	enum bmx280_mask_32bit_t : uint32_t
 	{
 		BMx280_MASK_DIG_T1 = 0x0000FFFF,		//dig_T1, unsigned short
 		BMx280_MASK_DIG_T2 = 0x0000FFFF,		//dig_T2, signed short
