@@ -21,7 +21,7 @@
 
 SPISettings BMx280SPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
 
-BMx280MI::BMx280MI() : 
+BMx280MI::BMx280MI() :
 	id_(BMP280_ID),			//assume BMP280 by default
 	temp_fine_(0L),
 	raw_humidity_(0L),
@@ -63,9 +63,11 @@ bool BMx280MI::begin()
 	if (!beginInterface())
 		return false;
 
+	//update sensor ID. 
+	id_ = readID();
+
 	//check sensor ID. return false if sensor ID does not match BME280 or BMP280 sensors. 
-	uint8_t id = readID();
-	if (!((id == BMP280_ID) || (id == BME280_ID)))
+	if (!((id_ == BMP280_ID) || (id_ == BME280_ID)))
 		return false;
 
 	//wait until the sensor has finished transferring calibration data
@@ -73,7 +75,7 @@ bool BMx280MI::begin()
 		delay(100);
 
 	//read compensation parameters
-	readCompensationParameters();
+	comp_params_ = readCompensationParameters();
 
 	//use default values
 	resetToDefaults();
@@ -124,6 +126,7 @@ float BMx280MI::getHumidity()
 		return NAN;
 
 	int32_t v_x1_u32r;
+
 	v_x1_u32r = temp_fine_ - 76800L;
 	v_x1_u32r = ((((raw_humidity_ << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) * (((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) * static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
 	v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) * ((int32_t)comp_params_.dig_H1_)) >> 4);
@@ -145,32 +148,33 @@ float BMx280MI::getPressure()
 	var1 = (((comp_params_.dig_P3_ * (((var1 >> 2) * (var1 >> 2)) >> 13)) >> 3) + (((static_cast<int32_t>(comp_params_.dig_P2_)) * var1) >> 1)) >> 18;
 	var1 = ((32768 + var1) * static_cast<int32_t>(comp_params_.dig_P1_)) >> 15;
 
-	if (var1 == 0) 
+	if (var1 == 0)
 		return NAN; // avoid exception caused by division by zero
 
 	p = ((static_cast<uint32_t>(1048576L - raw_pressure_)) - (var2 >> 12)) * 3125;
 
 	if (p < 0x80000000)
-		p = (p << 1) / (static_cast<uint32_t>(var1));
-	else 
-		p = (p / static_cast<uint32_t>(var1)) * 2;
+		p = (p << 1) / static_cast<uint32_t>(var1);
+	else
+		p = p / static_cast<uint32_t>(var1) * 2;
 
 	var1 = (static_cast<int32_t>(comp_params_.dig_P9_) * static_cast<int32_t>(((p >> 3) * (p >> 3)) >> 13)) >> 12;
 	var2 = (static_cast<int32_t>(p >> 2) * static_cast<int32_t>(comp_params_.dig_P8_)) >> 13;
 	p = static_cast<uint32_t>(static_cast<int32_t>(p) + ((var1 + var2 + comp_params_.dig_P7_) >> 4));
-
 
 	return static_cast<float>(p);
 }
 
 float BMx280MI::getTemperature()
 {
+	int32_t var1, var2, T;
+
 	//code adapted from BME280 data sheet section 8.2
-	int32_t var1 = ((raw_temp_ >> 3) - (static_cast<int32_t>(comp_params_.dig_T1_) << 1) * static_cast<int32_t>(comp_params_.dig_T2_)) >> 11;
-	int32_t var2 = ((raw_temp_ >> 4) - static_cast<int32_t>(comp_params_.dig_T1_) * ((raw_temp_ >> 4) - (static_cast<int32_t>(comp_params_.dig_T1_)) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_)) >> 14;
-	temp_fine_ = var1 + var2; 
-	int32_t T = (temp_fine_ * 5 + 128) >> 8;
-	
+	var1 = ((raw_temp_ >> 3) - (static_cast<int32_t>(comp_params_.dig_T1_) << 1) * static_cast<int32_t>(comp_params_.dig_T2_)) >> 11;
+	var2 = ((raw_temp_ >> 4) - static_cast<int32_t>(comp_params_.dig_T1_) * ((raw_temp_ >> 4) - (static_cast<int32_t>(comp_params_.dig_T1_)) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_)) >> 14;
+	temp_fine_ = var1 + var2;
+	T = (temp_fine_ * 5 + 128) >> 8;
+
 	return static_cast<float>(T) / 100.0f;
 }
 
@@ -218,40 +222,61 @@ float BMx280MI::readPressure()
 
 uint8_t BMx280MI::readID()
 {
-	id_ = readRegisterValue(BMx280_REG_ID, BMx280_MASK_ID);
-
-	return id_;
+	return readRegisterValue(BMx280_REG_ID, BMx280_MASK_ID);
 }
 
 BMx280MI::BMP280CompParams BMx280MI::readCompensationParameters()
 {
-	//read compensation parameters
-	comp_params_.dig_T1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_T1, BMx280_MASK_DIG_T1, 2));
-	comp_params_.dig_T2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T2, BMx280_MASK_DIG_T2, 2));
-	comp_params_.dig_T3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T3, BMx280_MASK_DIG_T3, 2));
+	BMP280CompParams comp_params = {
+		0, //dig_T1
+		0, //dig_T2
+		0, //dig_T3
 
-	comp_params_.dig_P1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_P1, BMx280_MASK_DIG_P1, 2));
-	comp_params_.dig_P2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P2, BMx280_MASK_DIG_P2, 2));
-	comp_params_.dig_P3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P3, BMx280_MASK_DIG_P3, 2));
-	comp_params_.dig_P4_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P4, BMx280_MASK_DIG_P4, 2));
-	comp_params_.dig_P5_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P5, BMx280_MASK_DIG_P5, 2));
-	comp_params_.dig_P6_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P6, BMx280_MASK_DIG_P6, 2));
-	comp_params_.dig_P7_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P7, BMx280_MASK_DIG_P7, 2));
-	comp_params_.dig_P8_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P8, BMx280_MASK_DIG_P8, 2));
-	comp_params_.dig_P9_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P9, BMx280_MASK_DIG_P9, 2));
+		0, //dig_P1
+		0, //dig_P2
+		0, //dig_P3
+		0, //dig_P4
+		0, //dig_P5
+		0, //dig_P6
+		0, //dig_P7
+		0, //dig_P8
+		0, //dig_P9
+
+		0, //dig_H1
+		0, //dig_H2
+		0, //dig_H3
+		0, //dig_H4
+		0, //dig_H5
+		0  //dig_H6
+	};
+
+	//read compensation parameters
+	comp_params.dig_T1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_T1, BMx280_MASK_DIG_T1, 2));
+	comp_params.dig_T2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T2, BMx280_MASK_DIG_T2, 2));
+	comp_params.dig_T3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_T3, BMx280_MASK_DIG_T3, 2));
+
+	comp_params.dig_P1_ = static_cast<uint16_t>(readRegisterValueBurst(BMx280_REG_DIG_P1, BMx280_MASK_DIG_P1, 2));
+	comp_params.dig_P2_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P2, BMx280_MASK_DIG_P2, 2));
+	comp_params.dig_P3_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P3, BMx280_MASK_DIG_P3, 2));
+	comp_params.dig_P4_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P4, BMx280_MASK_DIG_P4, 2));
+	comp_params.dig_P5_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P5, BMx280_MASK_DIG_P5, 2));
+	comp_params.dig_P6_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P6, BMx280_MASK_DIG_P6, 2));
+	comp_params.dig_P7_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P7, BMx280_MASK_DIG_P7, 2));
+	comp_params.dig_P8_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P8, BMx280_MASK_DIG_P8, 2));
+	comp_params.dig_P9_ = static_cast<int16_t>(readRegisterValueBurst(BMx280_REG_DIG_P9, BMx280_MASK_DIG_P9, 2));
 
 	//reda humidity compensation parameters if the sensor is of the BME280 family
 	if (isBME280())
 	{
-		comp_params_.dig_H1_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 1));
-		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 2));
-		comp_params_.dig_H1_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H3, 1));
-		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H4, 2));
-		comp_params_.dig_H1_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H5, 2));
-		comp_params_.dig_H1_ = static_cast<int8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H6, 1));
+		comp_params.dig_H1_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 1));
+		comp_params.dig_H2_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H2, BME280_MASK_DIG_H2, 2));
+		comp_params.dig_H3_ = static_cast<uint8_t>(readRegisterValueBurst(BME280_REG_DIG_H3, BME280_MASK_DIG_H3, 1));
+		comp_params.dig_H4_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H4, BME280_MASK_DIG_H4, 2));
+		comp_params.dig_H5_ = static_cast<int16_t>(readRegisterValueBurst(BME280_REG_DIG_H5, BME280_MASK_DIG_H5, 2));
+		comp_params.dig_H6_ = static_cast<int8_t>(readRegisterValueBurst(BME280_REG_DIG_H6, BME280_MASK_DIG_H6, 1));
 	}
 
-	return comp_params_;
+	return comp_params;
 }
 
 bool BMx280MI::isBME280()
@@ -418,18 +443,18 @@ bool BMx280I2C::beginInterface()
 
 uint8_t BMx280I2C::readRegister(uint8_t reg)
 {
-	#if defined(ARDUINO_SAM_DUE)
-		//workaround for Arduino Due. The Due seems not to send a repeated start with the code above, so this 
-		//undocumented feature of Wire::requestFrom() is used. can be used on other Arduinos too (tested on Mega2560)
-		//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
-		Wire.requestFrom(address_, 1, reg, 1, true);
-	#else
-		Wire.beginTransmission(address_);
-		Wire.write(reg);
-		Wire.endTransmission(false);
-		Wire.requestFrom(address_, static_cast<uint8_t>(1));
-	#endif
-	
+#if defined(ARDUINO_SAM_DUE)
+	//workaround for Arduino Due. The Due seems not to send a repeated start with the code above, so this 
+	//undocumented feature of Wire::requestFrom() is used. can be used on other Arduinos too (tested on Mega2560)
+	//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
+	Wire.requestFrom(address_, 1, reg, 1, true);
+#else
+	Wire.beginTransmission(address_);
+	Wire.write(reg);
+	Wire.endTransmission(false);
+	Wire.requestFrom(address_, static_cast<uint8_t>(1));
+#endif
+
 	return Wire.read();
 }
 
@@ -493,17 +518,17 @@ bool BMx280SPI::beginInterface()
 uint8_t BMx280SPI::readRegister(uint8_t reg)
 {
 	uint8_t return_value = 0;
-	
+
 	SPI.beginTransaction(spi_settings_);
 
 	digitalWrite(cs_, LOW);				//select sensor
 
 	SPI.transfer((reg & 0x3F) | 0x40);	//select register and set pin 7 (indicates read)
-	
+
 	return_value = SPI.transfer(0);
 
 	digitalWrite(cs_, HIGH);			//deselect sensor
-	
+
 	return return_value;
 }
 

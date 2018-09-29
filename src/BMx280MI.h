@@ -144,11 +144,11 @@ public:
 	//@return pressure in Pa or NAN if the measurement failed. 
 	float readPressure();
 
-	//@return the ID of the BMP280. the sensor will always return 0x58, so this function 
+	//@return the ID of the BMP280. the sensor will always return 0x58 (BMP280) or 0x60 (BME280), so this function 
 	//can be used as a communication check. 
 	uint8_t readID();
 
-	//reads the compensation parameters from the sensor and updates the values stored in comp_params_. 
+	//reads the compensation parameters from the sensor. 
 	//@return sensors compensation parameters as BMP280CompParams struct. 
 	BMP280CompParams readCompensationParameters();
 
