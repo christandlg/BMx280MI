@@ -67,7 +67,7 @@ bool BMx280MI::begin()
 	id_ = readID();
 
 	//check sensor ID. return false if sensor ID does not match BME280 or BMP280 sensors. 
-	if (!((id_ == BMP280_ID) || (id_ == BME280_ID)))
+	if ((id_ != BMx280MI::BMP280_ID) && (id_ != BMx280MI::BME280_ID))
 		return false;
 
 	//wait until the sensor has finished transferring calibration data
@@ -279,9 +279,12 @@ BMx280MI::BMP280CompParams BMx280MI::readCompensationParameters()
 	return comp_params;
 }
 
-bool BMx280MI::isBME280()
+bool BMx280MI::isBME280(bool update_id)
 {
-	return (BMx280MI::readID() == BMx280MI::BME280_ID);
+	if (update_id)
+		id_ = readID();
+
+	return (id_ == BMx280MI::BME280_ID);
 }
 
 void BMx280MI::resetToDefaults()

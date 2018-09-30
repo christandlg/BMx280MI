@@ -155,8 +155,10 @@ public:
 	//@return sensors compensation parameters as BMP280CompParams struct. 
 	BMP280CompParams readCompensationParameters();
 
+	//checks if the sensor ID matches that of a BME280 sensor. 
+	//@param (optional) update_id if true the internally kept sensor ID is updated. 
 	//@return true if the sensor is a BME280, false otherwise. 
-	bool isBME280();
+	bool isBME280(bool update_id = false);
 
 	/*
 	resets all registers to default values. */
@@ -323,7 +325,7 @@ private:
 	@return value of masked bits. */
 	template <class T> uint8_t getMaskedBits(T reg, T mask)
 	{
-		//extract masked bits
+		//extract masked bitsy
 		return ((reg & mask) >> getMaskShift(mask));
 	};
 
