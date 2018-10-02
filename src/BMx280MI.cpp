@@ -80,6 +80,12 @@ bool BMx280MI::begin()
 	//use default values
 	resetToDefaults();
 
+    if (isBME280())
+        writeOversamplingHumidity(OSRS_H_x16);
+
+    writeOversamplingPressure(OSRS_P_x16);
+    writeOversamplingTemperature(OSRS_T_x16);
+
 	return true;
 }
 
@@ -110,7 +116,12 @@ bool BMx280MI::hasValue()
 
 		if (isBME280())
 			raw_humidity_ = readRegisterValueBurst(BME280_REG_HUM, BME280_MASK_HUM, 2);
-	}
+
+        Serial.println("hasValue():");
+        Serial.println(raw_pressure_, HEX);	
+        Serial.println(raw_temp_, HEX);
+        Serial.println(raw_humidity_, HEX);
+    }
 
 	return has_value;
 }
@@ -174,6 +185,13 @@ float BMx280MI::getTemperature()
 	var2 = ((raw_temp_ >> 4) - static_cast<int32_t>(comp_params_.dig_T1_) * ((raw_temp_ >> 4) - (static_cast<int32_t>(comp_params_.dig_T1_)) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_)) >> 14;
 	temp_fine_ = var1 + var2;
 	T = (temp_fine_ * 5 + 128) >> 8;
+
+Serial.println("getTemperature()");
+Serial.print("raw_temp_: "); Serial.println(raw_temp_);
+Serial.print("var1: "); Serial.println(var1);
+Serial.print("var2: "); Serial.println(var2);
+Serial.print("temp_fine_: "); Serial.println(temp_fine_);
+Serial.print("T: "); Serial.println(T);
 
 	return static_cast<float>(T) / 100.0f;
 }
@@ -407,7 +425,7 @@ void BMx280MI::writeRegisterValue(uint8_t reg, uint8_t mask, uint8_t value)
 
 uint32_t BMx280MI::readRegisterValueBurst(uint8_t reg, uint32_t mask, uint8_t length)
 {
-	return getMaskedBits(readRegisterBurst(reg, length), mask);
+    return getMaskedBits(readRegisterBurst(reg, length), mask);
 }
 
 uint32_t BMx280MI::readRegisterBurst(uint8_t reg, uint8_t length)
