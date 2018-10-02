@@ -131,6 +131,12 @@ void setup() {
 		while (1);
 	}
 
+    if (bmx280.isBME280())
+      bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
+
+    bmx280.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
+    bmx280.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
+
 	//...
 }
 
