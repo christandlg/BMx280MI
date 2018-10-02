@@ -339,14 +339,7 @@ private:
 	@return value of masked bits. */
 	template <class T> T getMaskedBits(T reg, T mask)
 	{
-		//extract masked bitsy
-        Serial.print("getMaskedBits("); 
-        Serial.print(reg, HEX); 
-        Serial.print(" "); 
-        Serial.print(mask, HEX); 
-        Serial.println(");");
-
-        Serial.println((reg & mask) >> getMaskShift(mask), HEX);
+		//extract masked bits
 		return ((reg & mask) >> getMaskShift(mask));
 	};
 
