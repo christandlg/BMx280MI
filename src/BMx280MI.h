@@ -37,10 +37,23 @@ public:
 		FILTER_x16 = 0b100,
 	};
 
+	//humidity measurement oversampling register settings
+	//Note for BME280: when using filter, resolution is always 20 bit. 
+	enum osrs_h : uint8_t
+	{
+		OSRS_H_x00 = 0b000,     //deactivated
+		OSRS_H_x01 = 0b001,
+		OSRS_H_x02 = 0b010,
+		OSRS_H_x04 = 0b011,
+		OSRS_H_x08 = 0b100,
+		OSRS_H_x16 = 0b101
+	};
+
 	//pressure measurement oversampling register settings
 	//Note for BME280: when using filter, resolution is always 20 bit. 
 	enum osrs_p : uint8_t
 	{
+		OSRS_P_x00 = 0b000,     //deactivated
 		OSRS_P_x01 = 0b001,
 		OSRS_P_x02 = 0b010,
 		OSRS_P_x04 = 0b011,
@@ -52,6 +65,7 @@ public:
 	//Note for BME280: when using filter, resolution is always 20 bit. 
 	enum osrs_t : uint8_t
 	{
+		OSRS_T_x00 = 0b000,		//deactivated
 		OSRS_T_x01 = 0b001,		//16 bits
 		OSRS_T_x02 = 0b010,		//17 bits
 		OSRS_T_x04 = 0b011,		//18 bits
@@ -291,8 +305,8 @@ private:
 		BME280_MASK_DIG_H6 = 0x000000FF,		//dig_H6, signed char
 
 		BME280_MASK_HUM =	0x0000FFFF,			//humidity data (16 bits)
-		BMx280_MASK_PRESS = 0x000FFFFF,			//pressure data (20 bits)
-		BMx280_MASK_TEMP =	0x000FFFFF			//temperature data (20 bits)
+		BMx280_MASK_PRESS = 0x00FFFFF0,			//pressure data (20 bits)
+		BMx280_MASK_TEMP =	0x00FFFFF0			//temperature data (20 bits)
 	};
 
 	static const uint8_t BMx280_CMD_RESET = 0xB6;
@@ -323,9 +337,16 @@ private:
 	@param register value of register.
 	@param mask mask of value in register
 	@return value of masked bits. */
-	template <class T> uint8_t getMaskedBits(T reg, T mask)
+	template <class T> T getMaskedBits(T reg, T mask)
 	{
 		//extract masked bitsy
+        Serial.print("getMaskedBits("); 
+        Serial.print(reg, HEX); 
+        Serial.print(" "); 
+        Serial.print(mask, HEX); 
+        Serial.println(");");
+
+        Serial.println((reg & mask) >> getMaskShift(mask), HEX);
 		return ((reg & mask) >> getMaskShift(mask));
 	};
 
@@ -382,7 +403,7 @@ private:
 
 	uint8_t id_;				//the sensors ID. necessary to differentiate between BMP280 and BME280. 
 
-	uint32_t temp_fine_;
+	int32_t temp_fine_;
 
 	int32_t raw_humidity_;
 
