@@ -9,6 +9,7 @@
 BMx280MI	KEYWORD1
 BMx280I2C	KEYWORD1
 BMx280SPI	KEYWORD1
+BMP280CompParams	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -86,5 +87,8 @@ T_SB_4 LITERAL1
 T_SB_5 LITERAL1
 T_SB_6 LITERAL1
 T_SB_7 LITERAL1
+
+BME280_ID LITERAL1
+BMP280_ID LITERAL1
 
 #######################################
