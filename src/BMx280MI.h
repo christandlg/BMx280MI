@@ -93,7 +93,7 @@ public:
 	};
 
 	//compensation parameters
-	struct BMP280CompParams {
+	struct BMx280CompParams {
 		uint16_t dig_T1_;
 		int16_t dig_T2_;
 		int16_t dig_T3_;
@@ -108,7 +108,7 @@ public:
 		int16_t dig_P8_;
 		int16_t dig_P9_;
 
-		int8_t dig_H1_;
+		uint8_t dig_H1_;
 		int16_t dig_H2_;
 		uint8_t dig_H3_;
 		int16_t dig_H4_;
@@ -166,8 +166,8 @@ public:
 	uint8_t readID();
 
 	//reads the compensation parameters from the sensor. 
-	//@return sensors compensation parameters as BMP280CompParams struct. 
-	BMP280CompParams readCompensationParameters();
+	//@return sensors compensation parameters as BMx280CompParams struct. 
+	BMx280CompParams readCompensationParameters();
 
 	//checks if the sensor ID matches that of a BME280 sensor. 
 	//@param (optional) update_id if true the internally kept sensor ID is updated. 
@@ -344,6 +344,12 @@ private:
 	};
 
 	/*
+	swaps the byte order (MSB -> LSB and LSB -> MSB) of a given uint16_t variable. 
+	@param data 
+	@return data*/
+	uint16_t swapByteOrder(uint16_t data);
+
+	/*
 	@param register value of register
 	@param mask mask of value in register
 	@param value value to write into masked area
@@ -398,13 +404,13 @@ private:
 
 	int32_t temp_fine_;
 
-	int32_t raw_humidity_;
+	uint16_t uh_;
 
-	int32_t raw_pressure_;
+	uint32_t up_;
 
-	int32_t raw_temp_;
+	uint32_t ut_;
 
-	BMP280CompParams comp_params_;
+	BMx280CompParams comp_params_;
 };
 
 class BMx280I2C : public BMx280MI
