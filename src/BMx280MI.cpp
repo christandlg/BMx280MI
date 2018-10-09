@@ -77,14 +77,14 @@ bool BMx280MI::begin()
 	//read compensation parameters
 	comp_params_ = readCompensationParameters();
 
-	//use default values
-	resetToDefaults();
-
-	if (isBME280())
-		writeOversamplingHumidity(OSRS_H_x16);
-
-	writeOversamplingPressure(OSRS_P_x16);
-	writeOversamplingTemperature(OSRS_T_x16);
+	// //use default values
+	// resetToDefaults();
+	//
+	// if (isBME280())
+	// 	writeOversamplingHumidity(OSRS_H_x16);
+	//
+	// writeOversamplingPressure(OSRS_P_x16);
+	// writeOversamplingTemperature(OSRS_T_x16);
 
 	return true;
 }
