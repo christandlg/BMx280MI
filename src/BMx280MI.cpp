@@ -92,15 +92,17 @@ bool BMx280MI::begin()
 bool BMx280MI::measure()
 {
 	//return true if automatic measurements are enabled. 
-	if (static_cast<bool>(readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE)))
+	uint8_t mode = readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE);
+	if (mode == BMx280_MODE_NORMAL)
 		return true;
 
-	//return false if forced mode is enabled and a measurement is already running. 
-	if (static_cast<bool>(readRegisterValue(BMx280_REG_STATUS, BMx280_MASK_STATUS_MEASURING)))
-		return false;
+	//return false if sensor is currently in forced measurement mode.
+	else if ((mode == BMx280_MODE_FORCED) || mode == BMx280_MODE_FORCED_ALT)
+		return true;
 
 	//start a forced measurement. 
-	writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE, BMx280_MODE_FORCED);
+	else
+		writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE, BMx280_MODE_FORCED);
 
 	return true;
 }
@@ -289,12 +291,12 @@ BMx280MI::BMx280CompParams BMx280MI::readCompensationParameters()
 	//reda humidity compensation parameters if the sensor is of the BME280 family
 	if (isBME280())
 	{
-		comp_params.dig_H1_ = static_cast<uint8_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H1, BME280_MASK_DIG_H1, 1)));
+		comp_params.dig_H1_ = static_cast<uint8_t>(readRegisterValue(BME280_REG_DIG_H1, BME280_MASK_DIG_H1));
 		comp_params.dig_H2_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H2, BME280_MASK_DIG_H2, 2)));
-		comp_params.dig_H3_ = static_cast<uint8_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H3, BME280_MASK_DIG_H3, 1)));
+		comp_params.dig_H3_ = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H3, BME280_MASK_DIG_H3)));
 		comp_params.dig_H4_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H4, BME280_MASK_DIG_H4, 2)));
 		comp_params.dig_H5_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H5, BME280_MASK_DIG_H5, 2)));
-		comp_params.dig_H6_ = static_cast<int8_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H6, BME280_MASK_DIG_H6, 1)));
+		comp_params.dig_H6_ = static_cast<int8_t>(readRegisterValue(BME280_REG_DIG_H6, BME280_MASK_DIG_H6));
 	}
 
 	return comp_params;

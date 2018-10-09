@@ -75,9 +75,10 @@ public:
 
 	enum power_mode_t : uint8_t
 	{
-		BMx280_MODE_SLEEP = 0b00,	//device in sleep mode. 
-		BMx280_MODE_FORCED = 0b01,	//or 0b10. measurements are performed on demand. 
-		BMx280_MODE_NORMAL = 0b11	//measurements are performed periodically. 
+		BMx280_MODE_SLEEP = 0b00,		//device in sleep mode. 
+		BMx280_MODE_FORCED = 0b01,		//measurements are performed on demand. 
+		BMx280_MODE_FORCED_ALT = 0b10,	//alternative value for BMx280_MODE_FORCED. 
+		BMx280_MODE_NORMAL = 0b11		//measurements are performed periodically. 
 	};
 
 	enum standby_time_t : uint8_t
@@ -126,8 +127,8 @@ public:
 	//@return true on success, false otherwise. 
 	bool begin();
 
-	//starts a measurement. return true if automatic measurements are enabled (normal mode). returns false if a 
-	//measurement is currently running. 
+	//starts a measurement. return true if automatic measurements are enabled (normal mode) or a forced measurement
+	//is currently running. 
 	//@return true on success, false otherwise. 
 	bool measure();
 
