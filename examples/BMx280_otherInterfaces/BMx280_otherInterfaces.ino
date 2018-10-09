@@ -131,11 +131,17 @@ void setup() {
 		while (1);
 	}
 
-    if (bmx280.isBME280())
-      bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
 
-    bmx280.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
-    bmx280.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
+        //reset sensor to default parameters.
+        bmx280.resetToDefaults();
+
+        //if sensor is a BME280, set highest oversampling setting for humidity measurements.
+        if (sensor_.isBME280())
+                sensor_.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
+
+        //set highest oversampling setting for pressure and temperature measurements.
+        sensor_.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
+        sensor_.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
 
 	//...
 }

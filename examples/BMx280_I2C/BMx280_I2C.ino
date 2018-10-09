@@ -23,7 +23,7 @@
 
 #include <BMx280MI.h>
 
-#define I2C_ADDRESS 0x77
+#define I2C_ADDRESS 0x76
 
 //create an AS3935 object using the I2C interface, I2C address 0x01 and IRQ pin number 2
 BMx280I2C bmx280(I2C_ADDRESS);
@@ -35,7 +35,7 @@ void setup() {
 	//wait for serial connection to open (only necessary on some boards)
 	while (!Serial);
 
-	Wire.begin(D2, D3);
+	Wire.begin();
 
 	//begin() checks the Interface and I2C Address passed to the constructor and resets the AS3935 to 
 	//default values.
@@ -44,6 +44,17 @@ void setup() {
 		Serial.println("begin() failed. check your BMx280 Interface and I2C Address.");
 		while (1);
 	}
+
+	//reset sensor to default parameters.
+	bmx280.resetToDefaults();
+
+	//if sensor is a BME280, set highest oversampling setting for humidity measurements.
+	if (sensor_.isBME280())
+		sensor_.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
+
+	//set highest oversampling setting for pressure and temperature measurements. 
+	sensor_.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
+	sensor_.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
 
 	//...
 }
@@ -66,6 +77,6 @@ void loop() {
 		delay(100);
 	} while (!bmx280.hasValue());
 
-	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
+	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 }
