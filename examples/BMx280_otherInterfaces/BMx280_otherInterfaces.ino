@@ -1,6 +1,6 @@
 // BMx280_otherInterfaces.ino
 //
-// shows how to use the BMx280 library interfaces other than the native I2C or SPI interfaces. 
+// shows how to use the BMx280 library with interfaces other than the native I2C or SPI interfaces. 
 // here, the second I2C port of an Arduino Due is used (Wire1)
 //
 // Copyright (c) 2018 Gregor Christandl
@@ -12,8 +12,10 @@
 // GND ----- GND
 // SDA1 ---- SDA/SDI
 // SCL1 ---- SKC/SCL
-// 3.3V ---- CSB		(activates I2C for the BMx280)
-// GND ----- SDO		(sets I2C address to 0x76. connecting 3.3V to SDO instead sets the I2C address to 0x77)
+// some BMP280/BME280 modules break out the CSB and SDO pins as well: 
+// 5V ------ CSB (enables the I2C interface)
+// GND ----- SDO (I2C Address 0x76)
+// 5V ------ SDO (I2C Address 0x77)
 // other pins can be left unconnected.
 
 #include <Arduino.h>
@@ -123,8 +125,8 @@ void setup() {
 
 	Wire1.begin();
 
-	//begin() checks the Interface and I2C Address passed to the constructor and resets the BMx280 to 
-	//default values.
+	//begin() checks the Interface, reads the sensor ID (to differentiate between BMP280 and BME280)
+	//and reads compensation parameters.
 	if (!bmx280.begin())
 	{
 		Serial.println("begin() failed. check your BMx280 Interface and I2C Address.");
@@ -134,19 +136,19 @@ void setup() {
 	//reset sensor to default parameters.
 	bmx280.resetToDefaults();
 
-	//if sensor is a BME280, set highest oversampling setting for humidity measurements.
-	if (bmx280.isBME280())
-		bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
-
-	//set highest oversampling setting for pressure and temperature measurements. 
+	//by default sensing is disabled and must be enabled by setting a non-zero
+	//oversampling setting.
+	//set an oversampling setting for pressure and temperature measurements. 
 	bmx280.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
 	bmx280.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
 
-	//...
+	//if sensor is a BME280, set an oversampling setting for humidity measurements.
+	if (bmx280.isBME280())
+		bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+	// put your main code here, to run repeatedly:
 
 	delay(1000);
 
@@ -165,4 +167,5 @@ void loop() {
 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
+	Serial.print("Humidity: "); Serial.println(bmx280.getHumidity());
 }

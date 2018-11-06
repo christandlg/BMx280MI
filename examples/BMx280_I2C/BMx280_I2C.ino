@@ -1,21 +1,20 @@
-// AS3935MI_LightningDetector_I2C.ino
+// BMx280_I2C.ino
 //
-// shows how to use the AS3935MI library with the lightning sensor connected using I2C.
+// shows how to use the BMP280 / BMx280 library with the sensor connected using I2C.
 //
 // Copyright (c) 2018 Gregor Christandl
 //
 // connect the AS3935 to the Arduino like this:
 //
-// Arduino - AS3935
-// 5V ------ VCC
+// Arduino - BMP280 / BME280
+// 3.3V ---- VCC
 // GND ----- GND
-// D2 ------ IRQ		must be a pin supporting external interrupts, e.g. D2 or D3 on an Arduino Uno.
-// SDA ----- MOSI
+// SDA ----- SDA
 // SCL ----- SCL
-// 5V ------ SI		(activates I2C for the AS3935)
-// 5V ------ A0		(sets the AS3935' I2C address to 0x01)
-// GND ----- A1		(sets the AS3935' I2C address to 0x01)
-// 5V ------ EN_VREG !IMPORTANT when using 5V Arduinos (Uno, Mega2560, ...)
+// some BMP280/BME280 modules break out the CSB and SDO pins as well: 
+// 5V ------ CSB (enables the I2C interface)
+// GND ----- SDO (I2C Address 0x76)
+// 5V ------ SDO (I2C Address 0x77)
 // other pins can be left unconnected.
 
 #include <Arduino.h>
@@ -25,7 +24,7 @@
 
 #define I2C_ADDRESS 0x76
 
-//create an AS3935 object using the I2C interface, I2C address 0x01 and IRQ pin number 2
+//create a BMx280I2C object using the I2C interface with I2C Address 0x76
 BMx280I2C bmx280(I2C_ADDRESS);
 
 void setup() {
@@ -37,8 +36,8 @@ void setup() {
 
 	Wire.begin();
 
-	//begin() checks the Interface and I2C Address passed to the constructor and resets the AS3935 to 
-	//default values.
+	//begin() checks the Interface, reads the sensor ID (to differentiate between BMP280 and BME280)
+	//and reads compensation parameters.
 	if (!bmx280.begin())
 	{
 		Serial.println("begin() failed. check your BMx280 Interface and I2C Address.");
@@ -48,15 +47,15 @@ void setup() {
 	//reset sensor to default parameters.
 	bmx280.resetToDefaults();
 
-	//if sensor is a BME280, set highest oversampling setting for humidity measurements.
-	if (bmx280.isBME280())
-		bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
-
-	//set highest oversampling setting for pressure and temperature measurements. 
+	//by default sensing is disabled and must be enabled by setting a non-zero
+	//oversampling setting.
+	//set an oversampling setting for pressure and temperature measurements. 
 	bmx280.writeOversamplingPressure(BMx280MI::OSRS_P_x16);
 	bmx280.writeOversamplingTemperature(BMx280MI::OSRS_T_x16);
 
-	//...
+	//if sensor is a BME280, set an oversampling setting for humidity measurements.
+	if (bmx280.isBME280())
+		bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
 }
 
 void loop() {
@@ -79,4 +78,5 @@ void loop() {
 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
+	Serial.print("Humidity: "); Serial.println(bmx280.getHumidity());
 }
