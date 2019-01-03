@@ -117,6 +117,7 @@ bool BMx280MI::hasValue()
 
 float BMx280MI::getHumidity()
 {
+#warning humidity calculation implementation has not yet been tested. 
 	//return NAN if the sensor is not a BME280.
 	if (!isBME280())
 		return NAN;
