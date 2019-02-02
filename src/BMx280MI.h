@@ -251,8 +251,10 @@ private:
 		BME280_REG_DIG_H1 = 0xA1,		//dig_H1, unsigned char
 		BME280_REG_DIG_H2 = 0xE1,		//dig_H2, signed short
 		BME280_REG_DIG_H3 = 0xE3,		//dig_H3, unsigned char
-		BME280_REG_DIG_H4 = 0xE4,		//dig_H4, signed short
-		BME280_REG_DIG_H5 = 0xE5,		//dig_H5, signed short
+		BME280_REG_DIG_H4_MSB = 0xE4,	//dig_H4_MSB, byte
+		BME280_REG_DIG_H4_LSB = 0xE5,	//dig_H4_LSB, byte
+		BME280_REG_DIG_H5_MSB = 0xE6,	//dig_H5_MSB, byte
+		BME280_REG_DIG_H5_LSB = 0xE5,	//dig_H5_LSB, byte
 		BME280_REG_DIG_H6 = 0xE7,		//dig_H6, signed char
 
 		BME280_REG_CTRL_HUM = 0xF2,		//Controls oversampling of humidity data. 
@@ -301,8 +303,10 @@ private:
 		BME280_MASK_DIG_H1 = 0x000000FF,		//dig_H1, unsigned char
 		BME280_MASK_DIG_H2 = 0x0000FFFF,		//dig_H2, signed short
 		BME280_MASK_DIG_H3 = 0x000000FF,		//dig_H3, unsigned char
-		BME280_MASK_DIG_H4 = 0x00000FFF,		//dig_H4, signed short
-		BME280_MASK_DIG_H5 = 0x0000FFF0,		//dig_H5, signed short
+		BME280_MASK_DIG_H4_MSB = 0x000000FF,	//dig_H4_MSB, byte
+		BME280_MASK_DIG_H4_LSB = 0x0000000F,	//dig_H4_LSB, byte
+		BME280_MASK_DIG_H5_MSB = 0x000000FF,	//dig_H5_MSB, byte
+		BME280_MASK_DIG_H5_LSB = 0x000000F0,	//dig_H5_LSB, byte
 		BME280_MASK_DIG_H6 = 0x000000FF,		//dig_H6, signed char
 
 		BME280_MASK_HUM =	0x0000FFFF,			//humidity data (16 bits)

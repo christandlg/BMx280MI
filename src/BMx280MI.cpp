@@ -117,7 +117,6 @@ bool BMx280MI::hasValue()
 
 float BMx280MI::getHumidity()
 {
-#warning humidity calculation implementation has not yet been tested. 
 	//return NAN if the sensor is not a BME280.
 	if (!isBME280())
 		return NAN;
@@ -128,11 +127,15 @@ float BMx280MI::getHumidity()
 
 	int32_t v_x1_u32r;
 
-	//code adapted from BME280 data sheet section 8.2 and Bosch API
-	v_x1_u32r = static_cast<int32_t>(temp_fine_) - 76800L;
-	v_x1_u32r = ((((uh_ << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) * (((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) * static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
-	v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) * ((int32_t)comp_params_.dig_H1_)) >> 4);
-	v_x1_u32r = constrain(v_x1_u32r, 0, 419430400);
+	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
+	v_x1_u32r = temp_fine_ - 76800L;
+	v_x1_u32r = ((((static_cast<int32_t>(uh_) << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) *
+		(((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) * 
+			static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
+
+	v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) * static_cast<int32_t>(comp_params_.dig_H1_)) >> 4);
+
+	v_x1_u32r = constrain(v_x1_u32r, 0L, 419430400L);
 
 	return static_cast<float>(v_x1_u32r >> 12) / 1024.0f;
 }
@@ -286,8 +289,15 @@ BMx280MI::BMx280CompParams BMx280MI::readCompensationParameters()
 		comp_params.dig_H1_ = static_cast<uint8_t>(readRegisterValue(BME280_REG_DIG_H1, BME280_MASK_DIG_H1));
 		comp_params.dig_H2_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H2, BME280_MASK_DIG_H2, 2)));
 		comp_params.dig_H3_ = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H3, BME280_MASK_DIG_H3)));
-		comp_params.dig_H4_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H4, BME280_MASK_DIG_H4, 2)));
-		comp_params.dig_H5_ = static_cast<int16_t>(swapByteOrder(readRegisterValueBurst(BME280_REG_DIG_H5, BME280_MASK_DIG_H5, 2)));
+
+		uint8_t buf_msb = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H4_MSB, BME280_MASK_DIG_H4_MSB)));
+		uint8_t buf_lsb = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H4_LSB, BME280_MASK_DIG_H4_LSB)));
+		comp_params.dig_H4_ = (static_cast<uint16_t>(buf_msb) << 4) | buf_lsb;
+
+		buf_msb = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H5_MSB, BME280_MASK_DIG_H5_MSB)));
+		buf_lsb = static_cast<uint8_t>((readRegisterValue(BME280_REG_DIG_H5_LSB, BME280_MASK_DIG_H5_LSB)));
+		comp_params.dig_H5_ = (static_cast<uint16_t>(buf_msb) << 4) | buf_lsb;
+
 		comp_params.dig_H6_ = static_cast<int8_t>(readRegisterValue(BME280_REG_DIG_H6, BME280_MASK_DIG_H6));
 	}
 

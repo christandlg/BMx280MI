@@ -44,6 +44,11 @@ void setup() {
 		while (1);
 	}
 
+	if (bmx280.isBME280())
+		Serial.println("sensor is a BME280");
+	else
+		Serial.println("sensor is a BMP280");
+
 	//reset sensor to default parameters.
 	bmx280.resetToDefaults();
 
@@ -78,5 +83,7 @@ void loop() {
 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
-	Serial.print("Humidity: "); Serial.println(bmx280.getHumidity());
+
+	if (bmx280.isBME280())
+		Serial.print("Humidity: "); Serial.println(bmx280.getHumidity());
 }
