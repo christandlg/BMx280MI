@@ -9,4 +9,3 @@ Features:
 - Supports I2C (via the Wire library) and SPI (via the SPI library) interfaces
 - Supports other I2C and SPI libraries via inheritance
 - Never blocks or delays (except for convenience functions)
-- Humidity calculation is untested, will be tested as soon as my BME280s arrive in the mail. Sorry :(
