@@ -20,15 +20,15 @@
 #ifndef BMX280SPI_H_
 #define BMX280SPI_H_
 
-#include "BMX280SPIClass.h"
+#include "BMx280SPIClass.h"
 
-class BMX280SPI :
-	public BMX280SPIClass
+class BMx280SPI :
+	public BMx280SPIClass
 {
 public:
-	BMX280SPI(uint8_t cs_);
+	BMx280SPI(uint8_t cs_);
 
-	virtual ~BMX280SPI();
+	virtual ~BMx280SPI();
 };
 
 #endif /* BMX280SPI_H_ */

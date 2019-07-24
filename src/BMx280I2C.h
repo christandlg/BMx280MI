@@ -20,15 +20,15 @@
 #ifndef BMX280I2C_H_
 #define BMX280I2C_H_
 
-#include "BMX280TwoWire.h"
+#include "BMx280TwoWire.h"
 
-class BMX280I2C :
-	public BMX280TwoWire
+class BMx280I2C :
+	public BMx280TwoWire
 {
 public:
-	BMX280I2C(uint8_t address);
+	BMx280I2C(uint8_t address);
 
-	virtual ~BMX280I2C();
+	virtual ~BMx280I2C();
 };
 
 #endif /* BMX280I2C_H_ */

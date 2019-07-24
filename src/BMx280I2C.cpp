@@ -16,16 +16,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "BMX280I2C.h"
+#include "BMx280I2C.h"
 
-BMX280I2C::BMX280I2C(uint8_t address) :
-	BMX280TwoWire(&Wire, address)
+BMx280I2C::BMx280I2C(uint8_t address) :
+	BMx280TwoWire(&Wire, address)
 {
 	//nothing to do here...
 }
 
 
-BMX280I2C::~BMX280I2C()
+BMx280I2C::~BMx280I2C()
 {
 	//nothing to do here...
 }

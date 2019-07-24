@@ -16,14 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "BMX280SPI.h"
+#include "BMx280SPI.h"
 
-BMX280SPI::BMX280SPI(uint8_t cs_) : 
-	BMX280SPIClass(&SPI, cs_)
+BMx280SPI::BMx280SPI(uint8_t cs_) : 
+	BMx280SPIClass(&SPI, cs_)
 {
 }
 
 
-BMX280SPI::~BMX280SPI()
+BMx280SPI::~BMx280SPI()
 {
 }

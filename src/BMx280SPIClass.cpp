@@ -16,22 +16,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "BMX280SPIClass.h"
+#include "BMx280SPIClass.h"
 
-SPISettings BMx280SPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
+SPISettings BMx280SPIClass::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
 
-BMX280SPIClass::BMX280SPIClass(SPIClass *spi, uint8_t chip_select) :
+BMx280SPIClass::BMx280SPIClass(SPIClass *spi, uint8_t chip_select) :
 	cs_(chip_select)
 {
 	//nothing to do here...
 }
 
-BMX280SPIClass::~BMX280SPIClass()
+BMx280SPIClass::~BMx280SPIClass()
 {
 	//nothing to do here...
 }
 
-bool BMX280SPIClass::beginInterface()
+bool BMx280SPIClass::beginInterface()
 {
 	pinMode(cs_, OUTPUT);
 	digitalWrite(cs_, HIGH);		//deselect
@@ -39,7 +39,7 @@ bool BMX280SPIClass::beginInterface()
 	return true;
 }
 
-uint8_t BMX280SPIClass::readRegister(uint8_t reg)
+uint8_t BMx280SPIClass::readRegister(uint8_t reg)
 {
 	uint8_t return_value = 0;
 
@@ -56,7 +56,7 @@ uint8_t BMX280SPIClass::readRegister(uint8_t reg)
 	return return_value;
 }
 
-uint32_t BMX280SPIClass::readRegisterBurst(uint8_t reg, uint8_t length)
+uint32_t BMx280SPIClass::readRegisterBurst(uint8_t reg, uint8_t length)
 {
 	if (length > 4)
 		return 0L;
@@ -80,7 +80,7 @@ uint32_t BMX280SPIClass::readRegisterBurst(uint8_t reg, uint8_t length)
 	return data;
 }
 
-void BMX280SPIClass::writeRegister(uint8_t reg, uint8_t value)
+void BMx280SPIClass::writeRegister(uint8_t reg, uint8_t value)
 {
 	SPI.beginTransaction(spi_settings_);
 

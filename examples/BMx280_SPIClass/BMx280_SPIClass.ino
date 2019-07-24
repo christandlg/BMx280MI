@@ -18,12 +18,12 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#include <BMx280SPI.h>
+#include <BMx280SPIClass.h>
 
 #define PIN_CS 4
 
 //create an BMx280SPI object using pin 4 as chip select pin
-BMx280SPI bmx280(PIN_CS);
+BMx280SPIClass bmx280(&SPI, PIN_CS);
 
 void setup() {
 	// put your setup code here, to run once:

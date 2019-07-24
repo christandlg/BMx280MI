@@ -20,12 +20,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include <BMx280I2C.h>
+#include <BMx280TwoWire.h>
 
 #define I2C_ADDRESS 0x76
 
 //create a BMx280I2C object using the I2C interface with I2C Address 0x76
-BMx280I2C bmx280(I2C_ADDRESS);
+BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 
 void setup() {
   // put your setup code here, to run once:

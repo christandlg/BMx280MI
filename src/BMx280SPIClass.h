@@ -24,12 +24,12 @@
 
 #include <SPI.h>
 
-class BMX280SPIClass : 
+class BMx280SPIClass : 
 	public BMx280MI
 {
 public:
-	BMX280SPIClass(SPIClass *spi, uint8_t chip_select);
-	virtual ~BMX280SPIClass();
+	BMx280SPIClass(SPIClass *spi, uint8_t chip_select);
+	virtual ~BMx280SPIClass();
 
 protected:
 	SPIClass *spi_;

@@ -24,16 +24,16 @@
 
 #include <Wire.h>
 
-class BMX280TwoWire : 
+class BMx280TwoWire : 
 	public BMx280MI
 {
 public:
-	BMX280TwoWire(Wire *wire, uint8_t i2c_address);
+	BMx280TwoWire(TwoWire *wire, uint8_t i2c_address);
 
-	virtual ~BMX280TwoWire();
+	virtual ~BMx280TwoWire();
 
 protected:
-	Wire *wire_;
+	TwoWire *wire_;
 
 	uint8_t address_;
 
