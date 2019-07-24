@@ -1,25 +1,22 @@
-//Multi interface Bosch Sensortec BMP280  pressure sensor library 
-// Copyright (c) 2018 Gregor Christandl <christandlg@yahoo.com>
+//Multi interface Bosch Sensortec BMP280 / BME280 pressure sensor library 
+// Copyright (c) 2018-2019 Gregor Christandl <christandlg@yahoo.com>
 // home: https://bitbucket.org/christandlg/bmp280mi
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or (at your option) any later version.
-//
+
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-//
+
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-
 #include "BMx280MI.h"
-
-SPISettings BMx280SPI::spi_settings_ = SPISettings(2000000, MSBFIRST, SPI_MODE1);
 
 BMx280MI::BMx280MI() :
 	id_(BMP280_ID),			//assume BMP280 by default
@@ -455,149 +452,4 @@ uint32_t BMx280MI::readRegisterBurst(uint8_t reg, uint8_t length)
 	}
 
 	return data;
-}
-
-//-----------------------------------------------------------------------
-//BMx280I2C
-BMx280I2C::BMx280I2C(uint8_t i2c_address) :
-	address_(i2c_address)
-{
-	//nothing to do here...
-}
-
-BMx280I2C::~BMx280I2C()
-{
-	//nothing to do here...
-}
-
-bool BMx280I2C::beginInterface()
-{
-	return true;
-}
-
-uint8_t BMx280I2C::readRegister(uint8_t reg)
-{
-#if defined(ARDUINO_SAM_DUE)
-	//workaround for Arduino Due. The Due seems not to send a repeated start with the code above, so this 
-	//undocumented feature of Wire::requestFrom() is used. can be used on other Arduinos too (tested on Mega2560)
-	//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
-	Wire.requestFrom(address_, 1, reg, 1, true);
-#else
-	Wire.beginTransmission(address_);
-	Wire.write(reg);
-	Wire.endTransmission(false);
-	Wire.requestFrom(address_, static_cast<uint8_t>(1));
-#endif
-
-	return Wire.read();
-}
-
-uint32_t BMx280I2C::readRegisterBurst(uint8_t reg, uint8_t length)
-{
-	if (length > 4)
-		return 0L;
-
-	uint32_t data = 0L;
-
-#if defined(ARDUINO_SAM_DUE)
-	//workaround for Arduino Due. The Due seems not to send a repeated start with the code below, so this 
-	//undocumented feature of Wire::requestFrom() is used. can be used on other Arduinos too (tested on Mega2560)
-	//see this thread for more info: https://forum.arduino.cc/index.php?topic=385377.0
-	Wire.requestFrom(address_, length, data, length, true);
-#else
-	Wire.beginTransmission(address_);
-	Wire.write(reg);
-	Wire.endTransmission(false);
-	Wire.requestFrom(address_, static_cast<uint8_t>(length));
-
-	for (uint8_t i = 0; i < length; i++)
-	{
-		data <<= 8;
-		data |= Wire.read();
-	}
-#endif
-
-	return data;
-}
-
-void BMx280I2C::writeRegister(uint8_t reg, uint8_t value)
-{
-	Wire.beginTransmission(address_);
-	Wire.write(reg);
-	Wire.write(value);
-	Wire.endTransmission();
-}
-
-//-----------------------------------------------------------------------
-//BMx280SPI
-BMx280SPI::BMx280SPI(uint8_t chip_select) :
-	cs_(chip_select)
-{
-	//nothing to do here...
-}
-
-BMx280SPI::~BMx280SPI()
-{
-	//nothing to do here...
-}
-
-bool BMx280SPI::beginInterface()
-{
-	pinMode(cs_, OUTPUT);
-	digitalWrite(cs_, HIGH);		//deselect
-
-	return true;
-}
-
-uint8_t BMx280SPI::readRegister(uint8_t reg)
-{
-	uint8_t return_value = 0;
-
-	SPI.beginTransaction(spi_settings_);
-
-	digitalWrite(cs_, LOW);				//select sensor
-
-	SPI.transfer((reg & 0x3F) | 0x40);	//select register and set pin 7 (indicates read)
-
-	return_value = SPI.transfer(0);
-
-	digitalWrite(cs_, HIGH);			//deselect sensor
-
-	return return_value;
-}
-
-uint32_t BMx280SPI::readRegisterBurst(uint8_t reg, uint8_t length)
-{
-	if (length > 4)
-		return 0L;
-
-	uint32_t data = 0;
-
-	SPI.beginTransaction(spi_settings_);
-
-	digitalWrite(cs_, LOW);				//select sensor
-
-	SPI.transfer((reg & 0x3F) | 0x40);	//select register and set pin 7 (indicates read)
-
-	for (uint8_t i = 0; i < length; i++)
-	{
-		data <<= 8;
-		data |= SPI.transfer(0);
-	}
-
-	digitalWrite(cs_, HIGH);			//deselect sensor
-
-	return data;
-}
-
-void BMx280SPI::writeRegister(uint8_t reg, uint8_t value)
-{
-	SPI.beginTransaction(spi_settings_);
-
-	digitalWrite(cs_, LOW);				//select sensor
-
-	SPI.transfer((reg & 0x3F));			//select regsiter 
-	SPI.transfer(value);
-
-	digitalWrite(cs_, HIGH);			//deselect sensor
 }

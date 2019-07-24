@@ -1,5 +1,5 @@
-//Multi interface Bosch Sensortec BMP280  pressure sensor library 
-// Copyright (c) 2018 Gregor Christandl <christandlg@yahoo.com>
+//Multi interface Bosch Sensortec BMP280 / BME280 pressure sensor library 
+// Copyright (c) 2018-2019 Gregor Christandl <christandlg@yahoo.com>
 // home: https://bitbucket.org/christandlg/bmp280mi
 //
 // This library is free software; you can redistribute it and/or
@@ -17,13 +17,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-#ifndef BMP280MI_H_
-#define BMP280MI_H_
+#ifndef BMX280MI_H_
+#define BMX280MI_H_
 
 #include <Arduino.h>
-
-#include <SPI.h>
-#include <Wire.h>
 
 class BMx280MI
 {
@@ -418,42 +415,4 @@ private:
 	BMx280CompParams comp_params_;
 };
 
-class BMx280I2C : public BMx280MI
-{
-public:
-	BMx280I2C(uint8_t i2c_address);
-	virtual ~BMx280I2C();
-
-private:
-	bool beginInterface();
-
-	uint8_t readRegister(uint8_t reg);
-
-	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
-
-	void writeRegister(uint8_t reg, uint8_t value);
-
-	uint8_t address_;
-};
-
-class BMx280SPI : public BMx280MI
-{
-public:
-	BMx280SPI(uint8_t chip_select);
-	virtual ~BMx280SPI();
-
-private:
-	bool beginInterface();
-
-	uint8_t readRegister(uint8_t reg);
-
-	uint32_t readRegisterBurst(uint8_t reg, uint8_t length);
-
-	void writeRegister(uint8_t reg, uint8_t value);
-
-	uint8_t cs_;
-
-	static SPISettings spi_settings_;     //spi settings object. is the same for all BMx280 sensors
-};
-
-#endif /* BMP280MI_H_ */ 
+#endif /* BMX280MI_H_ */ 
