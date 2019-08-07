@@ -79,17 +79,11 @@ bool BMx280MI::begin()
 
 bool BMx280MI::measure()
 {
-	//return true if automatic measurements are enabled. 
 	uint8_t mode = readRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE);
-	if (mode == BMx280_MODE_NORMAL)
-		return true;
 
-	//return false if sensor is currently in forced measurement mode.
-	else if ((mode == BMx280_MODE_FORCED) || mode == BMx280_MODE_FORCED_ALT)
-		return true;
-
-	//start a forced measurement. 
-	else
+	//start a measurement if the sensor is currently in sleep moode. any other mode indicates that 
+	//measurements are performed automatically or a forced measurement is currently being performed. 
+	if (mode == BMx280_MODE_SLEEP)
 		writeRegisterValue(BMx280_REG_CTRL_MEAS, BMx280_MASK_MODE, BMx280_MODE_FORCED);
 
 	return true;
