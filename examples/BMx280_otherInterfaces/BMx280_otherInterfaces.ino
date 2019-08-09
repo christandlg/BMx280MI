@@ -167,5 +167,10 @@ void loop() {
 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
-	Serial.print("Humidity: "); Serial.println(bmx280.getHumidity());
+
+	if (bmx280.isBME280())
+	{
+		Serial.print("Humidity: "); 
+		Serial.println(bmx280.getHumidity());
+	}
 }
