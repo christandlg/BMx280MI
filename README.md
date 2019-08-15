@@ -1,4 +1,4 @@
-#Yet Another Arduino BME280 and BMP280 Digital Pressure Sensor Library
+# Yet Another Arduino BME280 and BMP280 Digital Pressure Sensor Library
 
 home: https://bitbucket.org/christandlg/bmx280mi
 
