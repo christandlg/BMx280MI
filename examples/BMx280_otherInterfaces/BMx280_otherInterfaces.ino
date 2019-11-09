@@ -166,6 +166,7 @@ void loop() {
 	} while (!bmx280.hasValue());
 
 	Serial.print("Pressure: "); Serial.println(bmx280.getPressure());
+	Serial.print("Pressure (64 bit): "); Serial.println(bmx280.getPressure64());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 
 	if (bmx280.isBME280())
