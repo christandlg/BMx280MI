@@ -20,6 +20,7 @@ measure	KEYWORD2
 hasValue	KEYWORD2
 getHumidity	KEYWORD2
 getPressure	KEYWORD2
+getPressure64	KEYWORD2
 getTemperature	KEYWORD2
 readHumidity	KEYWORD2
 readTemperature	KEYWORD2
