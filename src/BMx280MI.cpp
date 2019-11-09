@@ -121,7 +121,7 @@ float BMx280MI::getHumidity()
 	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
 	v_x1_u32r = temp_fine_ - 76800L;
 	v_x1_u32r = ((((static_cast<int32_t>(uh_) << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) *
-		(((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) * 
+		(((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) *
 			static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
 
 	v_x1_u32r = v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) * static_cast<int32_t>(comp_params_.dig_H1_)) >> 4);
@@ -163,6 +163,36 @@ float BMx280MI::getPressure()
 	p = static_cast<uint32_t>(static_cast<int32_t>(p) + ((var1 + var2 + comp_params_.dig_P7_) >> 4));
 
 	return static_cast<float>(p);
+}
+
+double BMx280MI::getPressure64()
+{
+	//return NAN if pressure measurements are disabled. 
+	if (up_ == 0x80000)
+		return NAN;
+
+	int64_t var1, var2, p;
+
+	//code adapted from BME280 data sheet section 8.2 and Bosch API
+	var1 = static_cast<int64_t>(temp_fine_) - 128000L;
+	var2 = var1 * var1 * static_cast<int64_t>(comp_params_.dig_P6_);
+	var2 = var2 + ((var1 * static_cast<int64_t>(comp_params_.dig_P5_)) << 17);
+	var2 = var2 + (static_cast<int64_t>(comp_params_.dig_P4_) << 35);
+	var1 = ((var1 * var1 * static_cast<int64_t>(comp_params_.dig_P3_)) >> 8) + ((var1 * static_cast<int64_t>(comp_params_.dig_P2_)) << 12);
+	var1 = (((static_cast<int64_t>(1) << 47) + var1) * static_cast<int64_t>(comp_params_.dig_P1_)) >> 33;
+
+	if (var1 == 0)
+		return NAN; // avoid exception caused by division by zero
+
+	p = static_cast<int64_t>(1048576L - up_);
+	p = ((p << 31) - var2) * 3125 / var1;
+
+	var1 = (static_cast<int64_t>(comp_params_.dig_P9_) * (p >> 13) * (p >> 13)) >> 25;
+	var2 = (static_cast<int64_t>(comp_params_.dig_P8_) * p) >> 19;
+
+	p = (p + var1 + var2) >> 8 + (static_cast<int64_t>(comp_params_.dig_P8_) << 4);
+
+	return static_cast<double>(p) / 256.0;
 }
 
 float BMx280MI::getTemperature()

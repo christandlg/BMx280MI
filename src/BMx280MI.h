@@ -141,6 +141,9 @@ public:
 	//@return the last measured pressure, in Pa. uses the 32bit calculation code taken from the datasheet. 
 	float getPressure();
 
+	//@return the last measured pressure, in Pa. uses the 64bit calculcation code taken from the datasheet. 
+	double getPressure64();
+
 	//@return the last measured temperature, in deg C. uses the 32bit calculation code taken from the datasheet. 
 	float getTemperature();
 	
