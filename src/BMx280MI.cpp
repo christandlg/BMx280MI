@@ -173,7 +173,7 @@ double BMx280MI::getPressure64()
 
 	int64_t var1, var2, p;
 
-	//code adapted from BME280 data sheet section 8.2 and Bosch API
+	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
 	var1 = static_cast<int64_t>(temp_fine_) - 128000L;
 	var2 = var1 * var1 * static_cast<int64_t>(comp_params_.dig_P6_);
 	var2 = var2 + ((var1 * static_cast<int64_t>(comp_params_.dig_P5_)) << 17);
@@ -190,7 +190,7 @@ double BMx280MI::getPressure64()
 	var1 = (static_cast<int64_t>(comp_params_.dig_P9_) * (p >> 13) * (p >> 13)) >> 25;
 	var2 = (static_cast<int64_t>(comp_params_.dig_P8_) * p) >> 19;
 
-	p = (p + var1 + var2) >> 8 + (static_cast<int64_t>(comp_params_.dig_P8_) << 4);
+	p = ((p + var1 + var2) >> 8) + (static_cast<int64_t>(comp_params_.dig_P7_) << 4);
 
 	return static_cast<double>(p) / 256.0;
 }
