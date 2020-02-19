@@ -13,6 +13,9 @@ sensors: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 / http
 
 ## Changelog:
 
+- 1.1.1
+	- fixed an error in 64 bit pressure calculation
+
 - 1.1.0
 	- added 64 bit pressure calculation
 
