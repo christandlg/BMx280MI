@@ -8,9 +8,13 @@ sensors: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 / http
 
 - Supports I2C (via the Wire library) and SPI (via the SPI library) interfaces
 - Supports other I2C and SPI libraries via inheritance
+- Supports 64 bit pressure calculation
 - Never blocks or delays (except for convenience functions)
 
 ## Changelog:
+
+- 1.1.0
+	- added 64 bit pressure calculation
 
 - 1.0.0
 	- added new classes BMx280TwoWire and BMx280SPIClass for TwoWire and SPIClass interfaces
