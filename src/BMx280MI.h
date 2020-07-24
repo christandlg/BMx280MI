@@ -139,9 +139,11 @@ public:
 	float getHumidity();
 
 	//@return the last measured pressure, in Pa. uses the 32bit calculation code taken from the datasheet. 
+	//This function returns wrong results if getTemperature() has not been called immediately before.
 	float getPressure();
 
-	//@return the last measured pressure, in Pa. uses the 64bit calculcation code taken from the datasheet. 
+	//@return the last measured pressure, in Pa. uses the 64bit calculcation code taken from the datasheet.
+	//This function returns wrong results if getTemperature() has not been called immediately before.
 	double getPressure64();
 
 	//@return the last measured temperature, in deg C. uses the 32bit calculation code taken from the datasheet. 
