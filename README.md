@@ -12,6 +12,9 @@ sensors: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 / http
 - Never blocks or delays (except for convenience functions)
 
 ## Changelog:
+- 1.1.2
+	- updated documentation on function hasValue()
+	- updated examples
 
 - 1.1.1
 	- fixed an error in 64 bit pressure calculation
