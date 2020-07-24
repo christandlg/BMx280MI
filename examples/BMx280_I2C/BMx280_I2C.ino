@@ -85,6 +85,8 @@ void loop() {
 	Serial.print("Pressure (64 bit): "); Serial.println(bmx280.getPressure64());
 	Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
 
+	//important: measurement data is read from the sensor in function hasValue() only. 
+	//make sure to call get*() functions only after hasValue() has returned true. 
 	if (bmx280.isBME280())
 	{
 		Serial.print("Humidity: "); 

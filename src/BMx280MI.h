@@ -131,6 +131,7 @@ public:
 
 	//@return true if a measurement was completed, false otherwise. 
 	//checks if a measurement is currently running. if no measurement is running, reads measurement data from the sensor. 
+	//important: values returned by get*() functions will not change unless hasValue() was called and returned true. 
 	//if automatic measurements are enabled calling this function may cause the values returned by getHumidity(), 
 	//getPressure() and getTemperature() to change. 
 	bool hasValue();
