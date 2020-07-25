@@ -320,10 +320,10 @@ private:
 	virtual bool beginInterface() = 0;
 
 	/*
-	updates the value of private class member variable temp_fine_, which must be up to date 
-	for temperature, pressure and humidity calculations. 
-	*/
-	void updateTempFine();
+	@return t_fine 
+	calculates the value of t_fine which is necessary for temperature, pressure and humidity calculations. 
+	calculation is based on values read from the sensor in function hasValue() */
+	int32_t calculateTempFine();
 
 	/*
 	@param mask
@@ -413,8 +413,6 @@ private:
 	virtual void writeRegister(uint8_t reg, uint8_t value) = 0;
 
 	uint8_t id_;				//the sensors ID. necessary to differentiate between BMP280 and BME280. 
-
-	int32_t temp_fine_;
 
 	uint16_t uh_;
 

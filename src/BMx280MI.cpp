@@ -20,7 +20,6 @@
 
 BMx280MI::BMx280MI() :
 	id_(BMP280_ID),			//assume BMP280 by default
-	temp_fine_(0L),
 	uh_(0L),
 	up_(0L),
 	ut_(0L)
@@ -116,12 +115,12 @@ float BMx280MI::getHumidity()
 	if (uh_ == 0x8000)
 		return NAN;
 
-	updateTempFine();
+	int32_t temp_fine = calculateTempFine();
 
 	int32_t v_x1_u32r;
 
 	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
-	v_x1_u32r = temp_fine_ - 76800L;
+	v_x1_u32r = temp_fine - 76800L;
 	v_x1_u32r = ((((static_cast<int32_t>(uh_) << 14) - (static_cast<int32_t>(comp_params_.dig_H4_) << 20) - (static_cast<int32_t>(comp_params_.dig_H5_) * v_x1_u32r)) + 16384L) >> 15) *
 		(((((((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H6_)) >> 10) * (((v_x1_u32r * static_cast<int32_t>(comp_params_.dig_H3_)) >> 11) + 32768L)) >> 10) + 2097152L) *
 			static_cast<int32_t>(comp_params_.dig_H2_) + 8192L) >> 14);
@@ -139,13 +138,13 @@ float BMx280MI::getPressure()
 	if (up_ == 0x80000)
 		return NAN;
 
-	updateTempFine();
+	int32_t temp_fine = calculateTempFine();
 
 	int32_t var1, var2;
 	uint32_t p;
 
 	//code adapted from BME280 data sheet section 8.2 and Bosch API
-	var1 = (static_cast<int32_t>(temp_fine_) >> 1) - 64000L;
+	var1 = (static_cast<int32_t>(temp_fine) >> 1) - 64000L;
 	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11) * (static_cast<int32_t>(comp_params_.dig_P6_));
 	var2 = var2 + ((var1*(static_cast<int32_t>(comp_params_.dig_P5_))) << 1);
 	var2 = (var2 >> 2) + ((static_cast<int32_t>(comp_params_.dig_P4_)) << 16);
@@ -175,12 +174,12 @@ double BMx280MI::getPressure64()
 	if (up_ == 0x80000)
 		return NAN;
 
-	updateTempFine();
+	int32_t temp_fine = calculateTempFine();
 
 	int64_t var1, var2, p;
 
 	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
-	var1 = static_cast<int64_t>(temp_fine_) - 128000L;
+	var1 = static_cast<int64_t>(temp_fine) - 128000L;
 	var2 = var1 * var1 * static_cast<int64_t>(comp_params_.dig_P6_);
 	var2 = var2 + ((var1 * static_cast<int64_t>(comp_params_.dig_P5_)) << 17);
 	var2 = var2 + (static_cast<int64_t>(comp_params_.dig_P4_) << 35);
@@ -207,9 +206,9 @@ float BMx280MI::getTemperature()
 	if (ut_ == 0x80000)
 		return NAN;
 
-	updateTempFine();
+	int32_t temp_fine = calculateTempFine();
 
-	int32_t T = (temp_fine_ * 5 + 128) >> 8;
+	int32_t T = (temp_fine * 5 + 128) >> 8;
 
 	return static_cast<float>(T) / 100.0f;
 }
@@ -428,9 +427,7 @@ bool BMx280MI::writeStandbyTime(uint8_t standby_time)
 	return true;
 }
 
-
-
-void BMx280MI::updateTempFine() {
+int32_t BMx280MI::calculateTempFine() {
 	int32_t var1, var2;
 
 	//code adapted from BME280 data sheet section 8.2 and Bosch API
@@ -441,7 +438,7 @@ void BMx280MI::updateTempFine() {
 	var2 = ((var2 * var2) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_);
 	var2 = var2 >> 14;
 
-	temp_fine_ = var1 + var2;
+	return var1 + var2;
 }
 
 uint16_t BMx280MI::swapByteOrder(uint16_t data)
