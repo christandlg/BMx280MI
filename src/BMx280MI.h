@@ -322,6 +322,12 @@ private:
 	virtual bool beginInterface() = 0;
 
 	/*
+	updates the value of private class member variable temp_fine_, which must be up to date 
+	for temperature, pressure and humidity calculations. 
+	*/
+	void updateTempFine();
+
+	/*
 	@param mask
 	@return number of bits to shift value so it fits into mask. */
 	template <class T> uint8_t getMaskShift(T mask)

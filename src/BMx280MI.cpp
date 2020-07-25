@@ -116,6 +116,8 @@ float BMx280MI::getHumidity()
 	if (uh_ == 0x8000)
 		return NAN;
 
+	updateTempFine();
+
 	int32_t v_x1_u32r;
 
 	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
@@ -136,6 +138,8 @@ float BMx280MI::getPressure()
 	//return NAN if pressure measurements are disabled. 
 	if (up_ == 0x80000)
 		return NAN;
+
+	updateTempFine();
 
 	int32_t var1, var2;
 	uint32_t p;
@@ -171,6 +175,8 @@ double BMx280MI::getPressure64()
 	if (up_ == 0x80000)
 		return NAN;
 
+	updateTempFine();
+
 	int64_t var1, var2, p;
 
 	//code adapted from BME280 data sheet section 4.2.3 and Bosch API
@@ -201,18 +207,9 @@ float BMx280MI::getTemperature()
 	if (ut_ == 0x80000)
 		return NAN;
 
-	int32_t var1, var2, T;
+	updateTempFine();
 
-	//code adapted from BME280 data sheet section 8.2 and Bosch API
-	var1 = ((static_cast<int32_t>(ut_) >> 3) - (static_cast<int32_t>(comp_params_.dig_T1_) << 1));
-	var1 = (var1 * static_cast<int32_t>(comp_params_.dig_T2_)) >> 11;
-
-	var2 = (static_cast<int32_t>(ut_) >> 4) - static_cast<int32_t>(comp_params_.dig_T1_);
-	var2 = ((var2 * var2) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_);
-	var2 = var2 >> 14;
-
-	temp_fine_ = var1 + var2;
-	T = (temp_fine_ * 5 + 128) >> 8;
+	int32_t T = (temp_fine_ * 5 + 128) >> 8;
 
 	return static_cast<float>(T) / 100.0f;
 }
@@ -429,6 +426,22 @@ bool BMx280MI::writeStandbyTime(uint8_t standby_time)
 	writeRegisterValue(BMx280_REG_CONFIG, BMx280_MASK_T_SB, standby_time);
 
 	return true;
+}
+
+
+
+void BMx280MI::updateTempFine() {
+	int32_t var1, var2;
+
+	//code adapted from BME280 data sheet section 8.2 and Bosch API
+	var1 = ((static_cast<int32_t>(ut_) >> 3) - (static_cast<int32_t>(comp_params_.dig_T1_) << 1));
+	var1 = (var1 * static_cast<int32_t>(comp_params_.dig_T2_)) >> 11;
+
+	var2 = (static_cast<int32_t>(ut_) >> 4) - static_cast<int32_t>(comp_params_.dig_T1_);
+	var2 = ((var2 * var2) >> 12) * static_cast<int32_t>(comp_params_.dig_T3_);
+	var2 = var2 >> 14;
+
+	temp_fine_ = var1 + var2;
 }
 
 uint16_t BMx280MI::swapByteOrder(uint16_t data)
