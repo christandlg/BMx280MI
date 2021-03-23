@@ -12,6 +12,8 @@ sensors: https://www.bosch-sensortec.com/bst/products/all_products/bmp280 / http
 - Never blocks or delays (except for convenience functions)
 
 ## Changelog:
+- 1.2.1
+	- added SoftWire Example. 
 - 1.2.0
 	- fixed a bug #3 where getPressure(), getPressure64() and getHumitiy would depend on getTemperature() to be called immediately before (since last time hasValue() returned true) in order to return correct values. 
 
