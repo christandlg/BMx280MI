@@ -427,6 +427,19 @@ bool BMx280MI::writeStandbyTime(uint8_t standby_time)
 	return true;
 }
 
+static float tempHumToDewPoint(float temperature, float humidity)
+{
+	return 243.04 * (log(humidity / 100.0) + ((17.625 * temperature) / (243.04 + temperature))) / (17.625 - log(humidity / 100.0)-((17.625 * temperature) / (243.04 + temperature)));
+}
+
+static float tempDewToHumidity(float temperature, float dew_point)
+{
+	return 100.0 * (exp((17.625 * dew_point) / (243.04 + dew_point)) / exp((17.625 * temperature)/  (243.04+  temperature)));
+}
+
+//-----------------------------------------------------------------------------
+//private member functions
+
 int32_t BMx280MI::calculateTempFine() {
 	int32_t var1, var2;
 
