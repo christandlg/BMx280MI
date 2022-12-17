@@ -174,6 +174,20 @@ double BMx280MI::getPressure64()
 	if (up_ == 0x80000)
 		return NAN;
 
+	int64_t p = getPressureI64();
+
+	if (p < 0)
+		return NAN;
+
+	return static_cast<double>(p) / 256.0;
+}
+
+int64_t BMx280MI::getPressureI64()
+{
+	//return 0 if pressure measurements are disabled 
+	if (up_ == 0x80000)
+		return -1;
+
 	int32_t temp_fine = calculateTempFine();
 
 	int64_t var1, var2, p;
@@ -187,7 +201,7 @@ double BMx280MI::getPressure64()
 	var1 = (((static_cast<int64_t>(1) << 47) + var1) * static_cast<int64_t>(comp_params_.dig_P1_)) >> 33;
 
 	if (var1 == 0)
-		return NAN; // avoid exception caused by division by zero
+		return -2; // avoid exception caused by division by zero
 
 	p = static_cast<int64_t>(1048576L - up_);
 	p = ((p << 31) - var2) * 3125 / var1;
@@ -197,7 +211,7 @@ double BMx280MI::getPressure64()
 
 	p = ((p + var1 + var2) >> 8) + (static_cast<int64_t>(comp_params_.dig_P7_) << 4);
 
-	return static_cast<double>(p) / 256.0;
+	return p;
 }
 
 float BMx280MI::getTemperature()

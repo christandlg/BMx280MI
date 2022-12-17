@@ -145,6 +145,11 @@ public:
 	//@return the last measured pressure, in Pa. uses the 64bit calculcation code taken from the datasheet.
 	double getPressure64();
 
+	//@return the last measured pressure, in Pa, as a <64,8> fixed point. uses the 64bit calculcation code taken from the datasheet. 
+	//returns -1 if pressure measurement is disabled. 
+	//returns -2 on calculation error. 
+	int64_t getPressureI64();
+
 	//@return the last measured temperature, in deg C. uses the 32bit calculation code taken from the datasheet. 
 	float getTemperature();
 	
